@@ -1,0 +1,17 @@
+export const ROUTES = {
+  WELCOME: '/welcome',
+  LOGIN: '/login',
+  SIGNUP: '/signup',
+  HOME: '/',
+  AI_ASSISTANT: '/ai-assistant',
+  COMMUNITIES: '/communities',
+  MESSAGES: '/messages',
+  NOTIFICATIONS: '/notifications',
+  PROFILE: '/profile',
+  SEARCH: '/search',
+  SETTINGS: '/settings',
+  LODAVIA_MATCH: '/lodavia-match',
+  LODAVIA_WORLD: '/lodavia-world',
+  VOICE_ROOMS: '/voice-rooms',
+  CREATOR_ECONOMY: '/creator-economy',
+};

@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.3s ease;
+}
+
+/* Cosmic Container day/night styles */
+:root {
+  --bg-cosmic-dark: radial-gradient(circle at 50% 50%, #0a1f44 0%, #071A3D 60%, #030a18 100%);
+  --bg-sky-light: radial-gradient(circle at 50% 50%, #f4f9ff 0%, #e3f2ff 50%, #cfedff 100%);
+}
+
+.cosmic-app-container {
+  background: var(--bg-cosmic-dark);
+}
+
+html.light .cosmic-app-container {
+  background: var(--bg-sky-light);
+}
+
+/* Glassmorphism custom components */
+.glass-panel {
+  background: rgba(7, 26, 61, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(39, 211, 255, 0.12);
+  box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.3);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(39, 211, 255, 0.22);
+  box-shadow: 0 10px 40px 0 rgba(39, 211, 255, 0.06);
+}
+
+/* Subtle Hover scale and glow */
+.glass-panel-interactive:hover {
+  transform: translateY(-4px);
+  border-color: rgba(39, 211, 255, 0.35);
+  box-shadow: 0 15px 45px 0 rgba(39, 211, 255, 0.12);
+}
+
+html.light .glass-panel-interactive:hover {
+  transform: translateY(-4px);
+  border-color: rgba(39, 211, 255, 0.45);
+  box-shadow: 0 15px 45px 0 rgba(39, 211, 255, 0.15);
+}
+
+/* Dynamic Inputs */
+.glass-input {
+  background: rgba(4, 14, 34, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.light .glass-input {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(39, 211, 255, 0.25);
+  color: #071A3D;
+}
+
+.glass-input:focus {
+  border-color: #27D3FF;
+  box-shadow: 0 0 15px rgba(39, 211, 255, 0.35);
+  outline: none;
+}
+
+html.light .glass-input:focus {
+  border-color: #27D3FF;
+  box-shadow: 0 0 15px rgba(39, 211, 255, 0.2);
+}
+
+/* Outgoing glowing messages */
+.glow-chat-bubble-sent {
+  background: linear-gradient(135deg, #1d8ab5 0%, #071A3D 100%);
+  box-shadow: 0 0 15px rgba(39, 211, 255, 0.22);
+  border: 1px solid rgba(39, 211, 255, 0.2);
+  color: white;
+}
+
+html.light .glow-chat-bubble-sent {
+  background: linear-gradient(135deg, #27D3FF 0%, #1a99c2 100%);
+  box-shadow: 0 0 15px rgba(39, 211, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+}
+
+/* Glowing profile avatar ring */
+.glowing-avatar-ring {
+  box-shadow: 0 0 14px rgba(39, 211, 255, 0.65);
+  border: 2px solid #27D3FF;
+}
+
+html.light .glowing-avatar-ring {
+  box-shadow: 0 0 10px rgba(39, 211, 255, 0.45);
+  border: 2px solid #27D3FF;
+}
+
+/* Premium Lodavia Glowing Energy Orb */
+@keyframes orb-pulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    box-shadow: 0 0 25px #27D3FF, 0 0 50px rgba(124, 58, 237, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.6);
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    box-shadow: 0 0 40px #27D3FF, 0 0 70px #FF9E45, inset 0 0 25px rgba(255, 255, 255, 0.9);
+  }
+}
+
+.lodavia-energy-orb {
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #27D3FF 45%, #7C3AED 80%);
+  animation: orb-pulse 4s infinite ease-in-out;
+}
+
+/* Light travel animation for sending messages */
+@keyframes light-travel {
+  0% { transform: scaleX(0); opacity: 0.8; }
+  50% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(0); opacity: 0; }
+}
+
+.light-travel-effect {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #27D3FF, #FF9E45, transparent);
+  transform-origin: left;
+  animation: light-travel 0.8s ease-out forwards;
+}
+
+/* Tiny Animated Twinkling Star Helpers */
+@keyframes twinkle-small {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 0.9; transform: scale(1.2); }
+}
+
+.star-helper {
+  animation: twinkle-small 3s infinite ease-in-out;
+}
+
+/* Floating animation nodes */
+@keyframes float-node-1 {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0) translateX(0); }
+  50% { transform: translate(-50%, -50%) translateY(-12px) translateX(6px); }
+}
+
+@keyframes float-node-2 {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0) translateX(0); }
+  50% { transform: translate(-50%, -50%) translateY(10px) translateX(-8px); }
+}
+
+@keyframes float-node-3 {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0) translateX(0); }
+  50% { transform: translate(-50%, -50%) translateY(-8px) translateX(-10px); }
+}
+
+.animate-float-1 { animation: float-node-1 7s ease-in-out infinite; }
+.animate-float-2 { animation: float-node-2 8s ease-in-out infinite; }
+.animate-float-3 { animation: float-node-3 6s ease-in-out infinite; }
+
+/* Pulse Glow buttons */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(39, 211, 255, 0.3), 0 0 20px rgba(124, 58, 237, 0.1); }
+  50% { box-shadow: 0 0 20px rgba(39, 211, 255, 0.6), 0 0 35px rgba(124, 58, 237, 0.4); }
+}
+
+.glow-btn-pulse {
+  animation: glowPulse 3s infinite;
+}

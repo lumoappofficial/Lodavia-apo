@@ -1,0 +1,117 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account settings, avatar, points and joined communities",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "avatar": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "bio": { "type": "string" },
+        "joinedCommunities": { "type": "array" },
+        "points": { "type": "number" },
+        "banned": { "type": "boolean" }
+      },
+      "required": ["id", "name", "email"]
+    },
+    "Community": {
+      "title": "Community",
+      "description": "A digital community hub where users gather, post and discuss",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "description": { "type": "string" },
+        "icon": { "type": "string" },
+        "banner": { "type": "string" },
+        "category": { "type": "string" },
+        "membersCount": { "type": "number" },
+        "admins": { "type": "array" }
+      },
+      "required": ["id", "name", "slug", "description", "category"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "A feed post or poll published inside a community",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "communityId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorAvatar": { "type": "string" },
+        "authorTitle": { "type": "string" },
+        "authorId": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "pinned": { "type": "boolean" },
+        "announcement": { "type": "boolean" },
+        "likesCount": { "type": "number" },
+        "commentsCount": { "type": "number" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "authorName", "content", "timestamp"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A direct message or community chat message with attachment support",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderAvatar": { "type": "string" },
+        "text": { "type": "string" },
+        "type": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "duration": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "senderId", "text", "timestamp"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "A community organized event or webinar with RSVP tracking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "communityId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "banner": { "type": "string" },
+        "organizer": { "type": "string" },
+        "attendeesCount": { "type": "number" }
+      },
+      "required": ["id", "title", "date", "time"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and account settings"
+    },
+    "/communities/{communityId}": {
+      "schema": "Community",
+      "description": "Main community hubs configurations"
+    },
+    "/communities/{communityId}/chat_messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Real-time interactive chat messages inside communities"
+    },
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Feed posts and interactive polls"
+    },
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Global or community events board"
+    }
+  }
+}

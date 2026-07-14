@@ -1,0 +1,7 @@
+{
+  "name": "Lodavia",
+  "description": "منصة Lodavia للتواصل، التعلم، والمجتمعات التفاعلية في عالم واحد متصل",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+t
