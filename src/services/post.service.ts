@@ -34,7 +34,6 @@ export const postService = {
         return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as Post[];
       } catch (err) {
         console.warn("Firestore post fetching error, using fallback helper:", err);
-        // Do not immediately fail. Log and throw the custom permission/read error or load local
         try {
           handleFirestoreError(err, OperationType.LIST, postsColPath);
         } catch (wrappedErr) {
@@ -51,12 +50,13 @@ export const postService = {
     }
   },
 
-  createPost: async (post: Post): Promise<void> => {
+  createPost: async (post: Post, userId: string): Promise<void> => {
     if (isFirebaseConfigured && db) {
       const path = `posts/${post.id}`;
       try {
         await setDoc(doc(db, 'posts', post.id), {
           ...post,
+          authorId: userId,
           timestamp: new Date().toISOString()
         });
       } catch (error) {
