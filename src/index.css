@@ -11,7 +11,8 @@ body {
 
 /* Cosmic Container day/night styles */
 :root {
-  --bg-cosmic-dark: radial-gradient(circle at 50% 50%, #0a1f44 0%, #071A3D 60%, #030a18 100%);
+  /* Richer, more saturated cosmic gradient — less "flat black hole", more depth */
+  --bg-cosmic-dark: radial-gradient(circle at 50% 0%, #1C2247 0%, #0D1026 55%, #080A16 100%);
   --bg-sky-light: radial-gradient(circle at 50% 50%, #f4f9ff 0%, #e3f2ff 50%, #cfedff 100%);
 }
 
@@ -25,10 +26,12 @@ html.light .cosmic-app-container {
 
 /* Glassmorphism custom components */
 .glass-panel {
-  background: rgba(7, 26, 61, 0.45);
+  /* Higher base opacity + navy tint (was near-black at 0.45) so accent colors
+     placed on top actually read instead of getting swallowed by darkness */
+  background: rgba(20, 25, 54, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(39, 211, 255, 0.12);
+  border: 1px solid rgba(39, 211, 255, 0.18);
   box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.3);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }

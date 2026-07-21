@@ -7,6 +7,7 @@ import { motion } from 'motion/react';
 import lumoWelcomeBg from '../assets/images/lumo_welcome_bg_1783872976024.jpg';
 import lodaviaLogoImage from '../assets/images/lodavia_logo_new.png';
 import LiveSpaceBackground from '../components/LiveSpaceBackground';
+import { themeStyles } from '../styles/theme';
 
 export default function Welcome() {
   const { lang, setLang, playSynthSound, setCurrentUser } = useApp();
@@ -31,28 +32,30 @@ export default function Welcome() {
   };
 
   return (
-    <div 
-      className="flex-1 min-h-screen relative flex flex-col justify-between items-center text-center overflow-hidden px-6 py-10" 
+    <div
+      className="flex-1 min-h-screen relative flex flex-col justify-between items-center text-center overflow-hidden px-6 py-10"
       id="welcome-root-container"
     >
       {/* 1. Full-Screen Cinematic Portrait Background Image */}
-      <img 
-        src={lumoWelcomeBg} 
-        alt="Lodavia Deep Cosmic background" 
+      <img
+        src={lumoWelcomeBg}
+        alt={lang === 'ar' ? 'الخلفية الكونية العميقة للودافيا' : 'Lodavia Deep Cosmic Background'}
         className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none z-0 scale-105 animate-[pulse_10s_infinite_alternate]"
         referrerPolicy="no-referrer"
       />
 
-      {/* 2. Deep Space Ambient Overlays */}
-      <div className="absolute inset-0 bg-slate-950/20 z-1 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/90 z-2 pointer-events-none" />
+      {/* 2. Deep Space Ambient Overlays — lighter than before so the vivid
+             background image and accent glows actually breathe instead of
+             getting crushed under near-opaque black */}
+      <div className="absolute inset-0 bg-void-950/15 z-1 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-void-950/30 via-transparent to-void-950/80 z-2 pointer-events-none" />
 
       {/* 2b. Living, twinkling starfield + shooting stars layer */}
       <LiveSpaceBackground starCount={80} shootingStars={2} className="z-[3]" />
 
       {/* 3. Global Language Switcher Header */}
       <div className="w-full max-w-md flex justify-end items-center z-10 relative mt-4">
-        <motion.button 
+        <motion.button
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -60,9 +63,9 @@ export default function Welcome() {
             setLang(lang === 'ar' ? 'en' : 'ar');
             playSynthSound(600, 'sine', 0.05);
           }}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-950/40 border border-white/10 text-[10px] font-bold text-slate-300 hover:bg-slate-950/75 hover:text-white transition-all cursor-pointer backdrop-blur-md active:scale-95"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-void-900/50 border border-white/15 text-[10px] font-bold text-white/80 hover:bg-void-900/80 hover:text-white hover:border-aurora-400/40 transition-all cursor-pointer backdrop-blur-md active:scale-95"
         >
-          <Languages className="w-3.5 h-3.5 text-cyan-400" />
+          <Languages className="w-3.5 h-3.5 text-aurora-400" />
           <span>{lang === 'ar' ? 'English' : 'العربية'}</span>
         </motion.button>
       </div>
@@ -79,83 +82,90 @@ export default function Welcome() {
           }}
           className="relative w-72 md:w-80 flex items-center justify-center"
         >
-          {/* Soft ambient glow behind the artwork */}
+          {/* Soft ambient glow behind the artwork — using brand tokens (nova + aurora + ember)
+              instead of the old cyan/purple/amber arbitrary mix, and boosted opacity so it
+              actually glows instead of barely showing */}
           <motion.div
-            className="absolute -inset-8 bg-gradient-to-tr from-cyan-500/20 via-purple-500/10 to-amber-400/20 rounded-full blur-2xl"
-            animate={{ opacity: [0.5, 1, 0.5] }}
+            className="absolute -inset-8 bg-gradient-to-tr from-aurora-500/30 via-nova-500/20 to-ember-500/30 rounded-full blur-2xl"
+            animate={{ opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
           />
 
           <img
             src={lodaviaLogoImage}
-            alt="Lodavia — Discover Your Universe"
-            className="relative w-full h-auto object-contain select-none pointer-events-none drop-shadow-[0_0_30px_rgba(103,232,249,0.25)]"
+            alt={lang === 'ar' ? 'شعار لودافيا الترحيبي — اكتشف كونك' : 'Lodavia Welcome Logo — Discover Your Universe'}
+            className="relative w-full h-auto object-contain select-none pointer-events-none drop-shadow-[0_0_35px_rgba(147,80,255,0.35)]"
             referrerPolicy="no-referrer"
           />
         </motion.div>
       </div>
 
-      {/* 5. Clean Action Panel & Buttons */}
+      {/* 5. Clean Action Panel & Buttons — now using the shared button hierarchy
+             from themeStyles so every screen in the app uses the same visual
+             language instead of one-off colors per screen */}
       <div className="w-full max-w-sm flex flex-col items-center z-10 relative mt-auto mb-2">
-        
-        {/* Create Account Button (Gradient Filled Pill) */}
+
+        {/* Primary action: Create Account — brand gradient (nova -> aurora), not
+            the old unrelated blue/indigo mix */}
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           onClick={() => {
-            playSynthSound(587.33, 'sine', 0.1); // D5 note
+            playSynthSound(587.33, 'sine', 0.1);
             navigate('/signup');
           }}
-          className="w-full py-4 px-6 rounded-full bg-gradient-to-r from-[#2c4ed3] via-[#3a44c2] to-[#512da8] text-white font-semibold text-xs tracking-wider uppercase flex items-center justify-center relative hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer shadow-[0_4px_25px_rgba(44,78,211,0.45)]"
+          className={`w-full py-4 px-6 text-xs tracking-wider uppercase flex items-center justify-center relative ${themeStyles.buttonPrimary}`}
         >
           <span>{lang === 'ar' ? 'إنشاء حساب جديد' : 'Create Account'}</span>
           <ArrowRight className={`absolute right-6 w-4 h-4 ${lang === 'ar' ? 'rotate-180 left-6 right-auto' : ''}`} />
         </motion.button>
 
-        {/* Sign In Button (Dark Transparent Bordered Pill) */}
+        {/* Secondary action: Sign In — visible outline instead of a murky
+            near-invisible dark fill */}
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
           onClick={() => {
-            playSynthSound(523.25, 'sine', 0.1); // C5 note
+            playSynthSound(523.25, 'sine', 0.1);
             navigate('/login');
           }}
-          className="w-full py-4 px-6 rounded-full border border-white/15 bg-[#090b16]/50 backdrop-blur-md text-white font-semibold text-xs tracking-wider uppercase flex items-center justify-center relative hover:bg-white/10 active:scale-[0.98] transition-all cursor-pointer shadow-lg mt-3.5"
+          className={`w-full py-4 px-6 text-xs tracking-wider uppercase flex items-center justify-center relative mt-3.5 ${themeStyles.buttonSecondary}`}
         >
           <span>{lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}</span>
           <ArrowRight className={`absolute right-6 w-4 h-4 ${lang === 'ar' ? 'rotate-180 left-6 right-auto' : ''}`} />
         </motion.button>
 
-        {/* Explore as Guest Button */}
+        {/* Tertiary action: Explore as Guest — brighter text, no longer
+            washed out at 80% opacity */}
         <motion.button
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.8 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.7 }}
           onClick={handleGuestExplore}
           disabled={guestLoading}
-          className="text-[10px] md:text-xs text-slate-300 font-semibold tracking-wide hover:text-white hover:underline transition-all mt-4.5 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+          className={`text-[10px] md:text-xs tracking-wide mt-4.5 disabled:opacity-50 flex items-center gap-1.5 ${themeStyles.buttonGhost}`}
         >
-          {guestLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />}
+          {guestLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-aurora-400" />}
           <span>{lang === 'ar' ? 'استكشف كزائر مباشر' : 'Explore as Guest'}</span>
         </motion.button>
 
-        {/* Subtle Horizontal Divider */}
-        <div className="w-1/2 border-t border-white/5 my-5.5 opacity-50" />
+        {/* Divider — raised from 5%/50% (basically invisible) to a visible hairline */}
+        <div className="w-1/2 border-t border-white/15 my-5.5" />
 
-        {/* Aesthetic footer tagline matching image exactly */}
-        <p className="text-[9px] md:text-[10px] text-slate-400 font-medium tracking-wide leading-relaxed">
+        {/* Footer tagline */}
+        <p className="text-[9px] md:text-[10px] text-white/60 font-medium tracking-wide leading-relaxed">
           {lang === 'ar' ? 'كون من العلاقات والفرص اللانهائية' : 'A universe of connections and possibilities'}
         </p>
 
         {/* Pulsing Single 4-Pointed Star Accent */}
-        <div className="mt-4 text-cyan-400/70 relative">
+        <div className="mt-4 text-aurora-400 relative">
           <motion.div
-            animate={{ 
+            animate={{
               scale: [1, 1.4, 1],
-              opacity: [0.5, 1, 0.5],
-              filter: ["drop-shadow(0 0 1px rgba(34,211,238,0.4))", "drop-shadow(0 0 6px rgba(34,211,238,0.9))", "drop-shadow(0 0 1px rgba(34,211,238,0.4))"]
+              opacity: [0.6, 1, 0.6],
+              filter: ["drop-shadow(0 0 1px rgba(39,211,255,0.5))", "drop-shadow(0 0 8px rgba(39,211,255,1))", "drop-shadow(0 0 1px rgba(39,211,255,0.5))"]
             }}
             transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
           >
