@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import LodaviaGlobe3D from './LodaviaGlobe3D';
+import LodaviaGlobe3D from './RealisticEarthGlobe3D';
 import { 
   Globe, Sparkles, MapPin, Users, Mic, Video, Calendar, 
   TrendingUp, Compass, ArrowLeft, Check, Plus, MessageSquare, 
