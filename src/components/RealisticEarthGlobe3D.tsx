@@ -62,14 +62,15 @@ function EarthSphere({ onEarthClick }: { onEarthClick?: () => void }) {
       <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
       <meshPhongMaterial
         map={day}
+        color={new THREE.Color(0x3a4a66)}
         bumpMap={bump}
         bumpScale={0.04}
         specularMap={specular}
         specular={new THREE.Color('grey')}
         shininess={12}
         emissiveMap={night}
-        emissive={new THREE.Color(0xffffff)}
-        emissiveIntensity={0.55}
+        emissive={new THREE.Color(0xffbb66)}
+        emissiveIntensity={1.6}
       />
     </mesh>
   );
@@ -102,10 +103,17 @@ function Atmosphere() {
     `,
   }), []);
 
+  const outerMaterial = useMemo(() => material.clone(), [material]);
+
   return (
-    <mesh scale={1.15} material={material}>
-      <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
-    </mesh>
+    <>
+      <mesh scale={1.04} material={material}>
+        <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
+      </mesh>
+      <mesh scale={1.22} material={outerMaterial}>
+        <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
+      </mesh>
+    </>
   );
 }
 
@@ -128,9 +136,10 @@ function HubMarker({
   return (
     <group position={position}>
       <mesh onClick={(e) => { e.stopPropagation(); onSelect(); }}>
-        <sphereGeometry args={[isSelected ? 0.045 : 0.028, 12, 12]} />
-        <meshBasicMaterial color={hub.glowColor || '#27D3FF'} />
+        <sphereGeometry args={[isSelected ? 0.05 : 0.032, 12, 12]} />
+        <meshBasicMaterial color={hub.glowColor || '#8fa5ff'} toneMapped={false} />
       </mesh>
+      <pointLight color={hub.glowColor || '#8fa5ff'} intensity={isSelected ? 1.2 : 0.5} distance={0.6} />
       <Html distanceFactor={8} occlude style={{ pointerEvents: 'none' }}>
         <div
           className={`px-2 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap backdrop-blur-md border transition-all ${
@@ -177,7 +186,7 @@ function NetworkArcs({ hubs }: { hubs: MapHub[] }) {
               itemSize={3}
             />
           </bufferGeometry>
-          <lineBasicMaterial color={0x27D3FF} transparent opacity={0.18} />
+          <lineBasicMaterial color={0x8fa5ff} transparent opacity={0.4} />
         </line>
       ))}
     </>
@@ -212,8 +221,8 @@ function Scene({
 
   return (
     <>
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[5, 2, 5]} intensity={1.4} />
+      <ambientLight intensity={0.15} />
+      <directionalLight position={[5, 2, 5]} intensity={0.7} />
       <Stars radius={80} depth={40} count={2500} factor={2} saturation={0} fade speed={0.5} />
 
       <group ref={groupRef}>
