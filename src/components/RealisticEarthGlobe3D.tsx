@@ -62,15 +62,15 @@ function EarthSphere({ onEarthClick }: { onEarthClick?: () => void }) {
       <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
       <meshPhongMaterial
         map={day}
-        color={new THREE.Color(0x3a4a66)}
+        color={new THREE.Color(0x66768f)}
         bumpMap={bump}
         bumpScale={0.04}
         specularMap={specular}
         specular={new THREE.Color('grey')}
         shininess={12}
         emissiveMap={night}
-        emissive={new THREE.Color(0xffbb66)}
-        emissiveIntensity={1.6}
+        emissive={new THREE.Color(0xffaa55)}
+        emissiveIntensity={2.2}
       />
     </mesh>
   );
@@ -78,12 +78,13 @@ function EarthSphere({ onEarthClick }: { onEarthClick?: () => void }) {
 
 function Atmosphere() {
   // Soft cosmic-brand-colored glow rim around the planet (Fresnel-style).
-  const material = useMemo(() => new THREE.ShaderMaterial({
+  const makeMaterial = (strength: number) => new THREE.ShaderMaterial({
     side: THREE.BackSide,
     blending: THREE.AdditiveBlending,
     transparent: true,
     uniforms: {
-      glowColor: { value: new THREE.Color(0x27D3FF) },
+      glowColor: { value: new THREE.Color(0x3aa0ff) },
+      strength: { value: strength },
     },
     vertexShader: `
       varying float intensity;
@@ -97,20 +98,22 @@ function Atmosphere() {
     fragmentShader: `
       varying float intensity;
       uniform vec3 glowColor;
+      uniform float strength;
       void main() {
-        gl_FragColor = vec4(glowColor, 1.0) * intensity;
+        gl_FragColor = vec4(glowColor, 1.0) * intensity * strength;
       }
     `,
-  }), []);
+  });
 
-  const outerMaterial = useMemo(() => material.clone(), [material]);
+  const innerMaterial = useMemo(() => makeMaterial(0.9), []);
+  const outerMaterial = useMemo(() => makeMaterial(0.22), []);
 
   return (
     <>
-      <mesh scale={1.04} material={material}>
+      <mesh scale={1.03} material={innerMaterial}>
         <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
       </mesh>
-      <mesh scale={1.22} material={outerMaterial}>
+      <mesh scale={1.1} material={outerMaterial}>
         <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
       </mesh>
     </>
@@ -221,8 +224,8 @@ function Scene({
 
   return (
     <>
-      <ambientLight intensity={0.15} />
-      <directionalLight position={[5, 2, 5]} intensity={0.7} />
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[5, 2, 5]} intensity={1.1} />
       <Stars radius={80} depth={40} count={2500} factor={2} saturation={0} fade speed={0.5} />
 
       <group ref={groupRef}>
