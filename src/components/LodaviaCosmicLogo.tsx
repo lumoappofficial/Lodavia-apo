@@ -1,7 +1,4 @@
 import React from 'react';
-import lodaviaAppIcon from '../assets/images/lumo_app_icon_1783685881881.jpg';
-import lodaviaLogo from '../assets/images/lodavia_logo_new.png';
-import auraLogo from '../assets/images/aura_logo_1783434952013.jpg';
 
 interface LogoProps {
   className?: string;
@@ -37,12 +34,9 @@ export default function LodaviaCosmicLogo({
         {glow && (
           <div className="absolute -inset-4 bg-gradient-to-r from-cyan-400/20 via-purple-500/15 to-orange-400/20 rounded-full blur-xl animate-pulse pointer-events-none" />
         )}
-        <img 
-          src={lodaviaLogo} 
-          alt="Lodavia Logo" 
-          className="h-full w-auto object-contain rounded-xl hover:scale-105 transition-all duration-500"
-          referrerPolicy="no-referrer"
-        />
+        <span className="text-xl font-black tracking-[0.3em] bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
+          LODAVIA
+        </span>
       </div>
     );
   }
@@ -58,12 +52,9 @@ export default function LodaviaCosmicLogo({
         {glow && (
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-xl animate-pulse pointer-events-none" />
         )}
-        <img 
-          src={auraLogo} 
-          alt="Aura Logo" 
-          className="h-full w-auto object-contain rounded-xl hover:scale-105 transition-all duration-500"
-          referrerPolicy="no-referrer"
-        />
+        <span className="text-xl font-black tracking-[0.3em] bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
+          AURA
+        </span>
       </div>
     );
   }
@@ -236,26 +227,17 @@ export default function LodaviaCosmicLogo({
         </g>
       </svg>
 
-      {/* 2. Central Core Image: Real Uploaded Lodavia App Icon! */}
+      {/* 2. Central Core Emblem */}
       <div 
-        className="absolute w-[44%] h-[44%] rounded-full overflow-hidden border border-white/20 shadow-[0_0_20px_rgba(34,211,238,0.4)] z-0 flex items-center justify-center bg-[#030514]"
+        className="absolute w-[44%] h-[44%] rounded-full overflow-hidden border border-white/20 shadow-[0_0_20px_rgba(34,211,238,0.4)] z-0 flex items-center justify-center bg-gradient-to-tr from-cyan-500 to-indigo-600"
         style={{
           top: '28%',
           left: '28%'
         }}
       >
-        {variant === 'vector' ? (
-          <div className="w-full h-full bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-black text-lg">
-            L
-          </div>
-        ) : (
-          <img 
-            src={lodaviaAppIcon} 
-            alt="Lodavia App Icon" 
-            className="w-full h-full object-cover select-none rounded-full"
-            referrerPolicy="no-referrer"
-          />
-        )}
+        <span className="text-white font-black text-lg select-none">
+          L
+        </span>
       </div>
     </div>
   );

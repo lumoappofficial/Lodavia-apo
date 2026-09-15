@@ -1,7 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, EmailAuthProvider, PhoneAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, setLogLevel } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { initAppCheck } from './appCheck';
 
 // In AI Studio, Firebase config can be loaded from environment variables
 // or dynamically from the provisioned configuration.
@@ -17,26 +18,39 @@ const firebaseConfig = {
   measurementId: metaEnv.VITE_FIREBASE_MEASUREMENT_ID || ""
 };
 
-// Check if we have a valid configuration (non-empty API Key)
-export const isFirebaseConfigured = !!firebaseConfig.apiKey;
+// Check if we have a valid configuration (non-empty API Key and Project ID)
+export const isFirebaseConfigured = !!(
+  firebaseConfig.apiKey &&
+  firebaseConfig.projectId &&
+  firebaseConfig.apiKey !== "YOUR_API_KEY"
+);
 
-let app;
+let app: any;
 let auth: any = null;
 let db: any = null;
 let storage: any = null;
+let appCheck: any = null;
 
 if (isFirebaseConfigured) {
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    // Initialize Firebase App Check before services are engaged
+    appCheck = initAppCheck(app);
     auth = getAuth(app);
     db = getFirestore(app);
+  try {
+    setLogLevel('silent');
+  } catch (e) {}
     storage = getStorage(app);
-    console.log("🚀 Lodavia Firebase successfully initialized!");
+    console.log("🚀 Lodavia Firebase successfully initialized with App Check protection!");
   } catch (error) {
-    console.error("❌ Error initializing Firebase:", error);
+    console.warn("⚠️ Firebase initialization notice:", error);
+    db = null;
+    auth = null;
+    storage = null;
   }
 } else {
-  console.warn("⚠️ Firebase credentials missing. Running in high-performance Local Offline Mock Backend.");
+  console.log("ℹ️ Running in high-performance Local Offline Mock Backend mode.");
 }
 
-export { app, auth, db, storage };
+export { app, auth, db, storage, appCheck };

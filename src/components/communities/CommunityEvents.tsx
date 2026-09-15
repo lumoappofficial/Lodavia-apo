@@ -26,7 +26,7 @@ interface EventItem {
 
 interface CommunityEventsProps {
   currentUser: AppUser;
-  lang: "ar" | "en";
+  lang: string;
   activeCommunity: CommunityItem;
   customData: any;
   setCommunityCustomData: React.Dispatch<React.SetStateAction<{ [commId: string]: any }>>;

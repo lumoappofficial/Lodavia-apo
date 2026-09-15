@@ -9,6 +9,24 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
+      dedupe: ['react', 'react-dom'],
+    },
+    build: {
+      sourcemap: false,
+    },
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        'motion/react',
+        'lucide-react',
+        'firebase/app',
+        'firebase/auth',
+        'firebase/firestore',
+        'firebase/storage',
+        'canvas-confetti',
+      ],
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

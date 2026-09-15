@@ -9,8 +9,11 @@ import {
   EventItem, 
   ChatConversation, 
   Post, 
-  ChatMessage 
+  ChatMessage,
+  SupportedLanguage,
+  LanguageInfo
 } from '../types';
+import { ActiveCallState } from '../types/call';
 import { 
   initialUser, 
   allCommunities, 
@@ -19,7 +22,23 @@ import {
   initialHomePosts 
 } from '../data';
 import { authService, firestoreService, storageService } from '../firebase/services';
+import { auth, isFirebaseConfigured } from '../firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
+import { creditFirstActivity } from '../utils/referral';
 import { playSynthSound } from '../utils/synth';
+import {
+  translate,
+  detectDeviceLanguage,
+  formatDate as formatI18nDate,
+  formatTime as formatI18nTime,
+  formatNumber as formatI18nNumber,
+  formatRelativeTime as formatI18nRelativeTime,
+  formatCurrency as formatI18nCurrency,
+  getLanguageInfo,
+  isRtlLanguage,
+  SUPPORTED_LANGUAGES,
+  DEFAULT_LANGUAGE
+} from '../locales';
 
 interface AppContextType {
   currentUser: AppUser;
@@ -32,9 +51,20 @@ interface AppContextType {
   setEvents: React.Dispatch<React.SetStateAction<EventItem[]>>;
   homePosts: Post[];
   setHomePosts: React.Dispatch<React.SetStateAction<Post[]>>;
+  isDataLoading: boolean;
   
-  lang: 'ar' | 'en';
-  setLang: (lang: 'ar' | 'en') => void;
+  lang: SupportedLanguage;
+  setLang: (lang: SupportedLanguage) => void;
+  t: (key: string, params?: Record<string, string | number>, fallback?: string) => string;
+  isRtl: boolean;
+  dir: 'rtl' | 'ltr';
+  supportedLanguages: LanguageInfo[];
+  formatDate: (date: Date | string | number, options?: Intl.DateTimeFormatOptions) => string;
+  formatTime: (date: Date | string | number, options?: Intl.DateTimeFormatOptions) => string;
+  formatNumber: (num: number, options?: Intl.NumberFormatOptions) => string;
+  formatRelativeTime: (date: Date | string | number) => string;
+  formatCurrency: (amount: number, currency?: string) => string;
+
   theme: 'dark' | 'light' | 'system';
   setTheme: (theme: 'dark' | 'light' | 'system') => void;
 
@@ -53,8 +83,8 @@ interface AppContextType {
   setActiveChat: (chat: ChatConversation | null) => void;
   showCreateModal: boolean;
   setShowCreateModal: (show: boolean) => void;
-  activeCall: { type: 'voice' | 'video'; contactName: string; status: 'ringing' | 'connected' } | null;
-  setActiveCall: (call: { type: 'voice' | 'video'; contactName: string; status: 'ringing' | 'connected' } | null) => void;
+  activeCall: ActiveCallState | { type: 'voice' | 'video'; contactName: string; status: any; [key: string]: any } | null;
+  setActiveCall: (call: ActiveCallState | { type: 'voice' | 'video'; contactName: string; status: any; [key: string]: any } | null) => void;
 
   aiGenerating: boolean;
   setAiGenerating: (gen: boolean) => void;
@@ -84,31 +114,111 @@ interface AppContextType {
   startWatchingAd: () => void;
   claimAdReward: () => void;
   handlePurchaseItem: (item: any) => void;
+  handleBuyAndOpenCosmicPack: (packId: string) => Promise<{ success: boolean; rewardItem: any; isDuplicate: boolean; shardsAwarded: number; messageAr?: string }>;
+  handleEquipCosmetic: (type: string, item: any) => void;
+  handleUnequipCosmetic: (type: string) => void;
+  handleToggleFavoriteCosmetic: (itemId: string) => void;
+  handleMarkCosmeticSeen: (itemId: string) => void;
+  handleClaimDailyCosmicReward: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppContextProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AppUser>(() => {
-    const saved = localStorage.getItem('lodavia_current_user') || localStorage.getItem('lumo_current_user');
-    return saved ? JSON.parse(saved) : initialUser;
+    try {
+      const saved = localStorage.getItem('lodavia_current_user') || localStorage.getItem('lumo_current_user');
+      return saved ? JSON.parse(saved) : initialUser;
+    } catch {
+      return initialUser;
+    }
   });
 
   // Sync currentUser to localStorage
   useEffect(() => {
-    localStorage.setItem('lodavia_current_user', JSON.stringify(currentUser));
+    try {
+      localStorage.setItem('lodavia_current_user', JSON.stringify(currentUser));
+    } catch {
+      // ignore storage quota errors
+    }
   }, [currentUser]);
+
+  // Synchronize Firebase Auth state changes
+  useEffect(() => {
+    if (!isFirebaseConfigured || !auth) return;
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        setCurrentUser(prev => ({
+          ...prev,
+          id: fbUser.uid,
+          email: fbUser.email || prev.email,
+          emailVerified: fbUser.emailVerified,
+          isAnonymous: fbUser.isAnonymous
+        }));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
   const [communities, setCommunities] = useState<CommunityItem[]>(allCommunities);
   const [chats, setChats] = useState<ChatConversation[]>(initialChats);
   const [events, setEvents] = useState<EventItem[]>(todayEvents);
   const [homePosts, setHomePosts] = useState<Post[]>(initialHomePosts);
+  const [isDataLoading, setIsDataLoading] = useState(false);
 
-  const [lang, setLangState] = useState<'ar' | 'en'>(() => {
-    return (localStorage.getItem('lodavia_lang') as 'ar' | 'en') || (localStorage.getItem('lumo_lang') as 'ar' | 'en') || 'ar';
+  const [lang, setLangState] = useState<SupportedLanguage>(() => {
+    try {
+      const stored = (localStorage.getItem('lodavia_lang') as SupportedLanguage) || (localStorage.getItem('lumo_lang') as SupportedLanguage);
+      if (stored && ['ar', 'en', 'fr', 'es', 'de', 'zh', 'ja'].includes(stored)) {
+        if (typeof document !== 'undefined') {
+          document.documentElement.lang = stored;
+          document.documentElement.dir = stored === 'ar' ? 'rtl' : 'ltr';
+        }
+        return stored;
+      }
+      const detected = detectDeviceLanguage();
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = detected;
+        document.documentElement.dir = detected === 'ar' ? 'rtl' : 'ltr';
+      }
+      return detected;
+    } catch {
+      return DEFAULT_LANGUAGE;
+    }
   });
   const [theme, setThemeState] = useState<'dark' | 'light' | 'system'>(() => {
-    return (localStorage.getItem('lodavia_theme') as 'dark' | 'light' | 'system') || (localStorage.getItem('lumo_theme') as 'dark' | 'light' | 'system') || 'dark';
+    try {
+      return (localStorage.getItem('lodavia_theme') as 'dark' | 'light' | 'system') || (localStorage.getItem('lumo_theme') as 'dark' | 'light' | 'system') || 'dark';
+    } catch {
+      return 'dark';
+    }
   });
+
+  const isRtl = isRtlLanguage(lang);
+  const dir = isRtl ? 'rtl' : 'ltr';
+
+  const t = (key: string, params?: Record<string, string | number>, fallback?: string) => {
+    return translate(key, lang, params, fallback);
+  };
+
+  const formatDate = (date: Date | string | number, options?: Intl.DateTimeFormatOptions) => {
+    return formatI18nDate(date, lang, options);
+  };
+
+  const formatTime = (date: Date | string | number, options?: Intl.DateTimeFormatOptions) => {
+    return formatI18nTime(date, lang, options);
+  };
+
+  const formatNumber = (num: number, options?: Intl.NumberFormatOptions) => {
+    return formatI18nNumber(num, lang, options);
+  };
+
+  const formatRelativeTime = (date: Date | string | number) => {
+    return formatI18nRelativeTime(date, lang);
+  };
+
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    return formatI18nCurrency(amount, lang, currency);
+  };
 
   const [activePostCommentsId, setActivePostCommentsId] = useState<string | null>(null);
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
@@ -118,7 +228,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const [activeCommunity, setActiveCommunity] = useState<CommunityItem | null>(null);
   const [activeChat, setActiveChat] = useState<ChatConversation | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [activeCall, setActiveCall] = useState<{ type: 'voice' | 'video'; contactName: string; status: 'ringing' | 'connected' } | null>(null);
+  const [activeCall, setActiveCall] = useState<ActiveCallState | { type: 'voice' | 'video'; contactName: string; status: any; [key: string]: any } | null>(null);
 
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiSuggestionText, setAiSuggestionText] = useState<{ ar: string; en: string } | null>(null);
@@ -133,10 +243,22 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const ringtoneIntervalRef = useRef<any>(null);
 
   // Sync Lang & Theme
-  const setLang = (newLang: 'ar' | 'en') => {
+  const setLang = (newLang: SupportedLanguage) => {
     setLangState(newLang);
-    localStorage.setItem('lodavia_lang', newLang);
-    localStorage.setItem('lumo_lang', newLang);
+    try {
+      localStorage.setItem('lodavia_lang', newLang);
+      localStorage.setItem('lumo_lang', newLang);
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = newLang;
+        document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+      }
+      setCurrentUser(prev => ({
+        ...prev,
+        language: newLang
+      }));
+    } catch (e) {
+      console.warn('Failed to persist language', e);
+    }
   };
 
   const setTheme = (newTheme: 'dark' | 'light' | 'system') => {
@@ -187,6 +309,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
 
     const loadData = async () => {
       try {
+        setIsDataLoading(true);
         const posts = await firestoreService.getPosts();
         if (posts && posts.length > 0) {
           setHomePosts(posts);
@@ -213,8 +336,11 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
             }));
           }
         });
+        setIsDataLoading(false);
       } catch (err) {
         console.error("Firestore loading/sync fallback active:", err);
+      } finally {
+        setIsDataLoading(false);
       }
     };
 
@@ -344,8 +470,10 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     };
 
     setHomePosts(prev => [newPost, ...prev]);
+    setCurrentUser(prev => ({ ...prev, journeyStats: { ...(prev.journeyStats || { learning: 0, helping: 0, creating: 0, gaming: 0, community: 0 }), creating: (prev.journeyStats?.creating || 0) + 1 } }));
     setNewPostText('');
     setNewPostMedia({ type: 'none', url: '' });
+    creditFirstActivity(currentUser.id);
 
     try {
       await firestoreService.createPost(newPost);
@@ -535,6 +663,119 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     setStoreMessage(lang === 'ar' ? `تهانينا! تم شراء "${item.nameAr}" بنجاح 🥳` : `Congrats! Successfully unlocked "${item.nameEn}" 🥳`);
   };
 
+  // Cosmic Packs Implementation Methods
+  const handleBuyAndOpenCosmicPack = async (packId: string) => {
+    // Check network status
+    if (!navigator.onLine) {
+      alert(lang === 'ar' ? '📡 شراء وحزم لودافيا يتطلب اتصالاً إنترنت صالحة لضمان أمان العمليات!' : '📡 Purchasing cosmic packs requires an active internet connection for security!');
+      return { success: false, rewardItem: null, isDuplicate: false, shardsAwarded: 0 };
+    }
+
+    try {
+      const res = await fetch('/api/packs/buy-and-open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ packId })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert(data.messageAr || (lang === 'ar' ? 'فشلت عملية الشراء' : 'Purchase failed'));
+        return { success: false, rewardItem: null, isDuplicate: false, shardsAwarded: 0 };
+      }
+
+      // Update state authoritatively from server response
+      setCurrentUser(prev => ({
+        ...prev,
+        points: data.newPoints,
+        shards: data.newShards,
+        inventory: data.newInventory,
+        newCosmetics: data.isDuplicate ? (prev.newCosmetics || []) : [...(prev.newCosmetics || []), data.rewardItem.id]
+      }));
+
+      return {
+        success: true,
+        rewardItem: data.rewardItem,
+        isDuplicate: data.isDuplicate,
+        shardsAwarded: data.shardsAwarded
+      };
+    } catch (err: any) {
+      console.error('Error buying pack:', err);
+      alert(lang === 'ar' ? 'حدث خطأ أثناء معالجة الشراء من السيرفر' : 'Server error processing transaction');
+      return { success: false, rewardItem: null, isDuplicate: false, shardsAwarded: 0 };
+    }
+  };
+
+  const handleEquipCosmetic = (type: string, item: any) => {
+    setCurrentUser(prev => {
+      const currentEquipped = prev.equippedCosmetics || {};
+      const updatedEquipped = { ...currentEquipped };
+
+      if (type === 'AVATAR_FRAME') updatedEquipped.frame = item.id;
+      else if (type === 'PROFILE_BACKGROUND') updatedEquipped.background = item.id;
+      else if (type === 'NAME_EFFECT') updatedEquipped.nameEffect = item.id;
+      else if (type === 'TITLE') updatedEquipped.title = item.id;
+      else if (type === 'BADGE' || type === 'CREATOR_BADGE') updatedEquipped.badge = item.id;
+      else if (type === 'CHARACTER_SKIN') updatedEquipped.characterSkin = item.mascotSkin;
+
+      return {
+        ...prev,
+        equippedCosmetics: updatedEquipped
+      };
+    });
+  };
+
+  const handleUnequipCosmetic = (type: string) => {
+    setCurrentUser(prev => {
+      const currentEquipped = { ...(prev.equippedCosmetics || {}) };
+      if (type === 'AVATAR_FRAME') delete currentEquipped.frame;
+      else if (type === 'PROFILE_BACKGROUND') delete currentEquipped.background;
+      else if (type === 'NAME_EFFECT') delete currentEquipped.nameEffect;
+      else if (type === 'TITLE') delete currentEquipped.title;
+      else if (type === 'BADGE' || type === 'CREATOR_BADGE') delete currentEquipped.badge;
+      else if (type === 'CHARACTER_SKIN') delete currentEquipped.characterSkin;
+
+      return {
+        ...prev,
+        equippedCosmetics: currentEquipped
+      };
+    });
+  };
+
+  const handleToggleFavoriteCosmetic = (itemId: string) => {
+    setCurrentUser(prev => {
+      const currentFavs = prev.favoriteCosmetics || [];
+      const isFav = currentFavs.includes(itemId);
+      return {
+        ...prev,
+        favoriteCosmetics: isFav ? currentFavs.filter(id => id !== itemId) : [...currentFavs, itemId]
+      };
+    });
+  };
+
+  const handleMarkCosmeticSeen = (itemId: string) => {
+    setCurrentUser(prev => ({
+      ...prev,
+      newCosmetics: (prev.newCosmetics || []).filter(id => id !== itemId)
+    }));
+  };
+
+  const handleClaimDailyCosmicReward = () => {
+    const bonusPoints = 200;
+    const bonusShards = 50;
+
+    setCurrentUser(prev => ({
+      ...prev,
+      points: prev.points + bonusPoints,
+      shards: (prev.shards || 0) + bonusShards,
+      lastDailyRewardClaim: new Date().toISOString()
+    }));
+
+    alert(lang === 'ar' 
+      ? `🎉 تم مطالبة المكافأة اليومية بنجاح!\n+${bonusPoints} نقطة لودافيا 🪙\n+${bonusShards} شظية كونية 💎` 
+      : `🎉 Daily Cosmic Reward claimed!\n+${bonusPoints} Lodavia Points 🪙\n+${bonusShards} Cosmic Shards 💎`);
+  };
+
   return (
     <AppContext.Provider value={{
       currentUser, setCurrentUser,
@@ -542,7 +783,17 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       chats, setChats,
       events, setEvents,
       homePosts, setHomePosts,
+      isDataLoading,
       lang, setLang,
+      t,
+      isRtl,
+      dir,
+      supportedLanguages: SUPPORTED_LANGUAGES,
+      formatDate,
+      formatTime,
+      formatNumber,
+      formatRelativeTime,
+      formatCurrency,
       theme, setTheme,
       activePostCommentsId, setActivePostCommentsId,
       commentInputs, setCommentInputs,
@@ -569,7 +820,13 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       handleSendChat,
       startWatchingAd,
       claimAdReward,
-      handlePurchaseItem
+      handlePurchaseItem,
+      handleBuyAndOpenCosmicPack,
+      handleEquipCosmetic,
+      handleUnequipCosmetic,
+      handleToggleFavoriteCosmetic,
+      handleMarkCosmeticSeen,
+      handleClaimDailyCosmicReward
     }}>
       {children}
     </AppContext.Provider>

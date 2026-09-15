@@ -30,6 +30,7 @@ import {
   Info
 } from 'lucide-react';
 import MarkdownRenderer from './MarkdownRenderer';
+import { sanitizeExternalUrl } from '../utils/urlSecurity';
 
 interface BriefItem {
   id: string;
@@ -94,6 +95,7 @@ export default function AIDailyBrief() {
   const [greeting, setGreeting] = useState<string>('');
   const [briefs, setBriefs] = useState<BriefItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('all');
 
   // Custom UI & Modals states
   const [showPreferences, setShowPreferences] = useState<boolean>(false);
@@ -592,9 +594,47 @@ export default function AIDailyBrief() {
             </div>
           </div>
 
+          {/* Category Quick Filter Pills Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <button
+              onClick={() => setActiveCategoryFilter('all')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all shrink-0 cursor-pointer border ${
+                activeCategoryFilter === 'all'
+                  ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white border-cyan-400/50 shadow-md'
+                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              {lang === 'ar' ? 'جميع الأخبار ✨' : 'All Briefs ✨'}
+            </button>
+            {INTEREST_OPTIONS.map(opt => {
+              const count = briefs.filter(b => b.interest === opt.category).length;
+              if (count === 0 && !selectedInterests.includes(opt.category)) return null;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setActiveCategoryFilter(opt.category)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-black transition-all shrink-0 cursor-pointer border flex items-center gap-1.5 ${
+                    activeCategoryFilter === opt.category
+                      ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white border-cyan-400/50 shadow-md'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                  }`}
+                >
+                  <span>{lang === 'ar' ? opt.labelAr : opt.labelEn}</span>
+                  {count > 0 && (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-cyan-400/20 text-cyan-300 font-extrabold">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Grid of customized news cards */}
           <div className="grid grid-cols-1 gap-6">
-            {briefs.map((brief, idx) => {
+            {briefs
+              .filter(b => activeCategoryFilter === 'all' || b.interest === activeCategoryFilter)
+              .map((brief, idx) => {
               const isExplainingActive = explainingBriefId === brief.id;
               const isChatActive = activeChatBriefId === brief.id;
               const briefChatHistory = chatHistories[brief.id] || [];
@@ -606,7 +646,7 @@ export default function AIDailyBrief() {
               return (
                 <div 
                   key={brief.id || idx}
-                  className="glass-panel p-5 rounded-3xl border border-white/5 bg-gradient-to-br from-[#0B0B16] via-[#101021] to-[#0D0D19] relative overflow-hidden group hover:border-cyan-500/20 transition-all duration-300 shadow-xl"
+                  className="cosmic-glass-panel p-5 rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-[#0B0B16] via-[#101021] to-[#0D0D19] relative overflow-hidden group hover:border-cyan-400/40 transition-all duration-300 shadow-xl"
                 >
                   {/* Subtle ambient light per card */}
                   <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 rounded-full blur-2xl pointer-events-none group-hover:bg-cyan-500/10 transition-all" />
@@ -685,7 +725,7 @@ export default function AIDailyBrief() {
                     </div>
                     
                     <a 
-                      href={brief.link} 
+                      href={sanitizeExternalUrl(brief.link)} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       onClick={() => logUserInteraction(brief.interest, 'source')}

@@ -4,7 +4,7 @@ import { AppUser, CommunityItem } from "../../types";
 
 interface CommunityProfileHeaderProps {
   currentUser: AppUser;
-  lang: "ar" | "en";
+  lang: string;
   activeCommunity: CommunityItem;
   handleToggleJoin: (commId: string) => void;
   playSynthSound: (frequency: number, type?: 'sine' | 'triangle' | 'sawtooth' | 'square', duration?: number) => void;

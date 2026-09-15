@@ -1,83 +1,335 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Default catch-all deny rule for zero-trust security
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isDocAuthor(data) {
+      return isSignedIn() && (
+        data.get('authorId', '') == request.auth.uid ||
+        data.get('userId', '') == request.auth.uid ||
+        data.get('creatorId', '') == request.auth.uid ||
+        data.get('hostId', '') == request.auth.uid
+      );
+    }
+
+    function isChatParticipant(data) {
+      return isSignedIn() && (
+        (request.auth.uid in data.get('participants', [])) ||
+        data.get('userId', '') == request.auth.uid ||
+        data.get('senderId', '') == request.auth.uid ||
+        data.get('recipientId', '') == request.auth.uid
+      );
+    }
+
+    function isSafeArrayAppend(field) {
+      return !(field in request.resource.data.diff(resource.data).affectedKeys()) || (
+        request.resource.data.get(field, []).hasAll(resource.data.get(field, [])) &&
+        request.resource.data.get(field, []).size() >= resource.data.get(field, []).size() &&
+        request.resource.data.get(field, []).size() <= resource.data.get(field, []).size() + 1
+      );
+    }
+
+    function isSafeUserArrayToggle(field) {
+      return !(field in request.resource.data.diff(resource.data).affectedKeys()) || (
+        (
+          request.resource.data.get(field, []).hasAll(resource.data.get(field, [])) &&
+          request.resource.data.get(field, []).size() <= resource.data.get(field, []).size() + 1
+        ) ||
+        (
+          resource.data.get(field, []).toSet().difference(request.resource.data.get(field, []).toSet()).hasOnly([request.auth.uid]) &&
+          request.resource.data.get(field, []).size() >= resource.data.get(field, []).size() - 1
+        )
+      );
+    }
+
+    function isDeltaWithinOne(field) {
+      return request.resource.data.get(field, 0) >= resource.data.get(field, 0) - 1 &&
+             request.resource.data.get(field, 0) <= resource.data.get(field, 0) + 1;
+    }
+
+    // ===============================================================
+    // 1. Default Deny Rule (Deny all unmapped reads and writes)
+    // ===============================================================
     match /{document=**} {
       allow read, write: if false;
     }
-    
-    // Helper functions for security checks
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-    
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-    
-    // 1. Users collection rules
+
+    // ===============================================================
+    // 2. Users Collection (users/{userId})
+    // ===============================================================
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId);
-      allow delete: if false;
-      
-      // AI query history
+      // Allow any authenticated user to view profiles
+      allow read: if isSignedIn();
+
+      // Creation allowed only for user's own profile with safe initial values
+      // Prevents self-assigning admin/moderator roles, high points, or financial balances
+      allow create: if isOwner(userId) &&
+        request.resource.data.get('banned', false) == false &&
+        request.resource.data.get('isAdmin', false) == false &&
+        request.resource.data.get('isStaff', false) == false &&
+        request.resource.data.get('isModerator', false) == false &&
+        request.resource.data.get('role', 'user') == 'user' &&
+        request.resource.data.get('points', 0) <= 150 &&
+        request.resource.data.get('coins', 0) == 0 &&
+        request.resource.data.get('shards', 0) == 0 &&
+        request.resource.data.get('wallet', 0) == 0 &&
+        request.resource.data.get('creatorEarnings', 0) == 0 &&
+        request.resource.data.get('isPremium', false) == false &&
+        request.resource.data.get('purchasedItems', []).size() == 0 &&
+        request.resource.data.get('inventory', []).size() == 0;
+
+      // Update allowed only by account owner for safe profile fields.
+      // STRICTLY PREVENTS user-side modification of privileges, currency, subscriptions, or status.
+      allow update: if isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'role', 'isAdmin', 'isStaff', 'isModerator', 'adminPrivileges', 'moderationStatus',
+          'points', 'coins', 'shards', 'wallet', 'creatorEarnings', 'earnings',
+          'badges', 'subscription', 'isPremium', 'banned', 'followersCount',
+          'followingCount', 'purchasedItems', 'inventory'
+        ]);
+
+      // Delete allowed only by account owner
+      allow delete: if isOwner(userId);
+
+      // AI queries history subcollection
       match /ai_history/{historyId} {
         allow read, write: if isOwner(userId);
       }
     }
-    
-    // 2. Posts collection rules
+
+    // ===============================================================
+    // 3. Posts Collection (posts/{postId})
+    // ===============================================================
     match /posts/{postId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
-      allow delete: if isAuthenticated();
+      allow read: if isSignedIn();
+
+      // Create allowed only if author matches current user's UID and counters start at zero
+      allow create: if isSignedIn() &&
+        request.resource.data.get('authorId', request.auth.uid) == request.auth.uid &&
+        request.resource.data.get('userId', request.auth.uid) == request.auth.uid &&
+        request.resource.data.get('likes', 0) == 0 &&
+        request.resource.data.get('likesCount', 0) == 0 &&
+        request.resource.data.get('commentsCount', 0) == 0 &&
+        request.resource.data.get('sharesCount', 0) == 0;
+
+      // Author can update post content (without tampering counters);
+      // Other authenticated users can interact, bounded strictly by +/- 1 delta.
+      allow update: if isSignedIn() && (
+        (
+          isDocAuthor(resource.data) &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['likes', 'likesCount', 'commentsCount', 'sharesCount'])
+        ) ||
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likesCount', 'comments', 'commentsCount', 'sharesCount']) &&
+          (!('likes' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('likes')) &&
+          (!('likesCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('likesCount')) &&
+          (!('commentsCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('commentsCount')) &&
+          (!('sharesCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('sharesCount')) &&
+          isSafeArrayAppend('comments')
+        )
+      );
+
+      // Delete allowed only for post author
+      allow delete: if isDocAuthor(resource.data);
     }
-    
-    // 3. Communities collection rules
+
+    // ===============================================================
+    // 4. Communities Collection (communities/{communityId})
+    // ===============================================================
     match /communities/{communityId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated(); // For joining / updating member count, roles or rules
-      allow delete: if false;
-      
-      // Subcollection for real-time community chat messages
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn() &&
+        request.resource.data.get('creatorId', request.auth.uid) == request.auth.uid &&
+        request.resource.data.get('userId', request.auth.uid) == request.auth.uid &&
+        request.resource.data.get('membersCount', 1) <= 1;
+
+      // Creator/admin can update community; joining/leaving users can only delta membersCount by +/- 1
+      allow update: if isSignedIn() && (
+        (
+          (isDocAuthor(resource.data) || (request.auth.uid in resource.data.get('admins', []))) &&
+          (!('membersCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('membersCount'))
+        ) ||
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['membersCount']) &&
+          isDeltaWithinOne('membersCount')
+        )
+      );
+
+      allow delete: if isDocAuthor(resource.data) || (request.auth.uid in resource.data.get('admins', []));
+
+      // Community chat messages subcollection
       match /chat_messages/{messageId} {
-        allow read: if isAuthenticated();
-        allow create: if isAuthenticated();
-        allow update, delete: if isAuthenticated();
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isSignedIn() && (
+          resource.data.senderId == request.auth.uid ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+        );
       }
     }
-    
-    // 4. Chats collection rules
-    match /chats/{chatId} {
-      allow read, write: if isAuthenticated() && (
-        resource == null || 
-        request.auth.uid in resource.data.members || 
-        request.auth.uid == resource.data.userId
-      );
-    }
-    
-    // 5. Voice Rooms rules
+
+    // ===============================================================
+    // 5. Voice Rooms Collection (voice_rooms/{roomId})
+    // ===============================================================
     match /voice_rooms/{roomId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated();
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn() &&
+        request.resource.data.get('hostId', request.auth.uid) == request.auth.uid &&
+        request.resource.data.get('creatorId', request.auth.uid) == request.auth.uid;
+
+      // Host can update room; normal users can only adjust listeners/speakers count within +/- 1
+      // Normal users CANNOT modify tags or room configuration
+      allow update: if isSignedIn() && (
+        isDocAuthor(resource.data) ||
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['listenersCount', 'speakersCount']) &&
+          (!('listenersCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('listenersCount')) &&
+          (!('speakersCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('speakersCount'))
+        )
+      );
+
+      allow delete: if isDocAuthor(resource.data);
     }
-    
-    // 6. Events rules
-    match /events/{eventId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
-      allow delete: if isAuthenticated();
+
+    // ===============================================================
+    // 6. Facts Collection (facts/{factId})
+    // ===============================================================
+    match /facts/{factId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn();
+
+      // Original author can update; any user can interact safely with delta bounds on counts
+      allow update: if isSignedIn() && (
+        isDocAuthor(resource.data) ||
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'likesBy', 'likesCount', 'savedBy', 'usefulBy', 'notUsefulBy',
+            'usefulCount', 'notUsefulCount', 'comments', 'commentsCount'
+          ]) &&
+          isSafeArrayAppend('comments') &&
+          isSafeUserArrayToggle('likesBy') &&
+          isSafeUserArrayToggle('savedBy') &&
+          isSafeUserArrayToggle('usefulBy') &&
+          isSafeUserArrayToggle('notUsefulBy') &&
+          (!('likesCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('likesCount')) &&
+          (!('usefulCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('usefulCount')) &&
+          (!('notUsefulCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('notUsefulCount')) &&
+          (!('commentsCount' in request.resource.data.diff(resource.data).affectedKeys()) || isDeltaWithinOne('commentsCount'))
+        )
+      );
+
+      allow delete: if isDocAuthor(resource.data);
+    }
+
+    // ===============================================================
+    // 7. Chats Collection (chats/{chatId}) & Subcollections
+    // ===============================================================
+    match /chats/{chatId} {
+      // Access granted strictly to legitimate conversation participants
+      allow read: if isChatParticipant(resource.data);
+
+      allow create: if isSignedIn() && (
+        (request.auth.uid in request.resource.data.get('participants', [])) ||
+        request.resource.data.get('userId', '') == request.auth.uid ||
+        request.resource.data.get('senderId', '') == request.auth.uid
+      );
+
+      // Participant can update conversation state (typing, unread, pin, block)
+      // and append messages safely. CANNOT truncate or overwrite existing messages.
+      allow update: if isChatParticipant(resource.data) &&
+        (!('participants' in request.resource.data.diff(resource.data).affectedKeys()) ||
+          request.resource.data.get('participants', []).hasAll(resource.data.get('participants', []))) &&
+        isSafeArrayAppend('messages');
+
+      allow delete: if isChatParticipant(resource.data);
+
+      // Direct messages subcollection (when messages are stored as sub-documents)
+      match /{subcollection=**} {
+        allow read: if isSignedIn() && (
+          (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.get('participants', [])) ||
+          get(/databases/$(database)/documents/chats/$(chatId)).data.get('userId', '') == request.auth.uid ||
+          get(/databases/$(database)/documents/chats/$(chatId)).data.get('senderId', '') == request.auth.uid
+        );
+
+        // Sender cannot impersonate another user in messages
+        allow create: if isSignedIn() && (
+          request.resource.data.senderId == request.auth.uid ||
+          request.resource.data.get('userId', '') == request.auth.uid
+        );
+
+        // Update and delete strictly restricted to the sender of the message
+        allow update, delete: if isSignedIn() && (
+          resource.data.senderId == request.auth.uid ||
+          resource.data.get('userId', '') == request.auth.uid
+        );
+      }
+    }
+
+    // ===============================================================
+    // 8. Notifications Collection (notifications/{notificationId})
+    // ===============================================================
+    match /notifications/{notificationId} {
+      // Read and delete are strictly allowed only for the targeted recipient
+      allow read, delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.get('recipientId', '') == request.auth.uid
+      );
+
+      // Recipient can only mark notification as read
+      allow update: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid || resource.data.get('recipientId', '') == request.auth.uid) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+      );
+
+      // Create is allowed for authenticated users, but CANNOT impersonate 'system', 'admin', or 'points'
+      allow create: if isSignedIn() &&
+        (request.resource.data.userId is string || request.resource.data.get('recipientId', '') is string) &&
+        request.resource.data.get('type', 'social') != 'system' &&
+        request.resource.data.get('type', 'social') != 'points' &&
+        request.resource.data.get('type', 'social') != 'admin';
+    }
+
+    // ===============================================================
+    // 9. Server-Controlled Collections (Read-Only / Backend-Only Writes)
+    // ===============================================================
+    match /marketplace/{listingId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Server-authoritative writes only
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid
+      );
+      allow write: if false; // Immutable ledger, server-only writes
+    }
+
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.buyerId == request.auth.uid
+      );
+      allow write: if false; // Server-authoritative writes only
+    }
+
+    match /subscriptions/{subId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false; // Server-authoritative writes only
     }
   }
 }

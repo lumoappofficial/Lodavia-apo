@@ -5,8 +5,10 @@ import {
   MessageSquare, Sliders, UserPlus, Award, Clock, ArrowLeft, Check, 
   X, Shield, Info, MessageCircle, TrendingUp, BookOpen, Terminal, 
   Code, Gamepad2, Dumbbell, Briefcase, Compass, GraduationCap, Video, 
-  Phone, MapPin, User, CheckCircle, AlertCircle, Filter, Lock, Settings
+  Phone, MapPin, User, CheckCircle, AlertCircle, Filter, Lock, Settings,
+  Tag
 } from 'lucide-react';
+import UnifiedCallModal from './call/UnifiedCallModal';
 
 export interface BuddyProfile {
   id: string;
@@ -45,7 +47,7 @@ export interface BuddyProfile {
 interface LumoMatchProps {
   currentUser: any;
   setCurrentUser: React.Dispatch<React.SetStateAction<any>>;
-  lang: 'ar' | 'en';
+  lang: string;
   playSynthSound: (freq: number, type: 'sine' | 'square' | 'sawtooth' | 'triangle', duration: number) => void;
   setActiveTab: (tab: any) => void;
 }
@@ -396,6 +398,100 @@ export default function LumoMatch({
   // Active Category State
   const [activeCategory, setActiveCategory] = useState<string>('study');
   
+  // User Interests State for Matching & Shared Overlap Calculation
+  const [userInterests, setUserInterests] = useState<string[]>(() => {
+    if (currentUser?.interests && Array.isArray(currentUser.interests) && currentUser.interests.length > 0) {
+      return currentUser.interests;
+    }
+    return ['React', 'AI', 'Gaming', 'Travel', 'Photography'];
+  });
+  const [newInterestInput, setNewInterestInput] = useState<string>('');
+
+  const popularInterestPresets = [
+    { en: 'Travel', ar: 'سفر', icon: '✈️' },
+    { en: 'Photography', ar: 'تصوير', icon: '📷' },
+    { en: 'React', ar: 'ريأكت', icon: '⚛️' },
+    { en: 'Rust', ar: 'رست', icon: '🦀' },
+    { en: 'AI', ar: 'ذكاء اصطناعي', icon: '🤖' },
+    { en: 'Gaming', ar: 'ألعاب', icon: '🎮' },
+    { en: 'Fitness', ar: 'رياضة', icon: '💪' },
+    { en: 'Languages', ar: 'لغات', icon: '🌍' },
+    { en: 'Startups', ar: 'مشاريع ناشئة', icon: '🚀' },
+    { en: 'Astronomy', ar: 'علم الفلك', icon: '🪐' }
+  ];
+
+  const handleAddInterest = (tag: string) => {
+    const trimmed = tag.trim().replace(/^#/, '');
+    if (!trimmed) return;
+    if (userInterests.some(i => i.toLowerCase() === trimmed.toLowerCase())) return;
+    playSynthSound(650, 'sine', 0.05);
+    const updated = [...userInterests, trimmed];
+    setUserInterests(updated);
+    if (setCurrentUser) {
+      setCurrentUser((prev: any) => ({ ...prev, interests: updated }));
+    }
+    setNewInterestInput('');
+  };
+
+  const handleRemoveInterest = (tag: string) => {
+    playSynthSound(400, 'sine', 0.05);
+    const updated = userInterests.filter(i => i.toLowerCase() !== tag.toLowerCase());
+    setUserInterests(updated);
+    if (setCurrentUser) {
+      setCurrentUser((prev: any) => ({ ...prev, interests: updated }));
+    }
+  };
+
+  // Helper to extract top 2-3 shared interests between current user and profile
+  const getTopSharedInterests = (profile: BuddyProfile) => {
+    const userNorm = userInterests.map(u => u.trim().toLowerCase());
+    const matched: { en: string; ar: string; isDirectMatch: boolean }[] = [];
+
+    // First collect direct or partial matches
+    profile.interests.forEach((interestEn, idx) => {
+      const interestAr = profile.interestsAr?.[idx] || interestEn;
+      const isMatch = userNorm.some(u => 
+        u === interestEn.toLowerCase() || 
+        u === interestAr.toLowerCase() ||
+        interestEn.toLowerCase().includes(u) ||
+        u.includes(interestEn.toLowerCase())
+      );
+      if (isMatch) {
+        matched.push({ en: interestEn, ar: interestAr, isDirectMatch: true });
+      }
+    });
+
+    if (matched.length >= 2) {
+      return matched.slice(0, 3);
+    }
+
+    // Supplement with profile's key interests so 2-3 are always present
+    const result = [...matched];
+    profile.interests.forEach((interestEn, idx) => {
+      const interestAr = profile.interestsAr?.[idx] || interestEn;
+      if (!result.some(r => r.en === interestEn) && result.length < 3) {
+        result.push({ en: interestEn, ar: interestAr, isDirectMatch: false });
+      }
+    });
+
+    return result.slice(0, 3);
+  };
+
+  // Dynamic compatibility adjustment based on user interests
+  const getCalculatedScore = (profile: BuddyProfile) => {
+    const userNorm = userInterests.map(u => u.trim().toLowerCase());
+    let overlapCount = 0;
+    profile.interests.forEach((interestEn, idx) => {
+      const interestAr = profile.interestsAr?.[idx] || interestEn;
+      if (userNorm.some(u => u === interestEn.toLowerCase() || u === interestAr.toLowerCase() || interestEn.toLowerCase().includes(u) || u.includes(interestEn.toLowerCase()))) {
+        overlapCount++;
+      }
+    });
+    // Boost base score by overlap, kept between 75% and 99%
+    const boost = overlapCount > 0 ? (overlapCount - 1) * 3 : -3;
+    return Math.min(99, Math.max(72, profile.compatibilityScore + boost));
+  };
+
   // Interactive Scanning States
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<number>(0);
@@ -478,9 +574,9 @@ export default function LumoMatch({
           playSynthSound(880, 'sine', 0.2);
           return 100;
         }
-        return prev + 10;
+        return prev + 4;
       });
-    }, 150);
+    }, 130);
   };
 
   // Run filtering on mock profiles
@@ -506,7 +602,8 @@ export default function LumoMatch({
       if (filterInterest !== 'All' && !profile.interests.includes(filterInterest)) return false;
 
       // Compatibility score match
-      if (profile.compatibilityScore < minCompatibility) return false;
+      const effectiveScore = getCalculatedScore(profile);
+      if (effectiveScore < minCompatibility) return false;
 
       return categoryMatch;
     });
@@ -555,9 +652,9 @@ export default function LumoMatch({
           playSynthSound(1046, 'sine', 0.25);
           return 100;
         }
-        return prev + 8;
+        return prev + 4;
       });
-    }, 120);
+    }, 130);
   };
 
   const handleConnect = (profile: BuddyProfile) => {
@@ -674,9 +771,9 @@ export default function LumoMatch({
     <div className="w-full text-slate-100 flex flex-col min-h-[75vh] pb-24" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* HEADER SECTION */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#0a0a14] to-purple-950/40 border border-white/5 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl mb-8">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-cyan-500/5 rounded-full blur-3xl animate-pulse pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl animate-pulse pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-cyan-950 via-slate-900 to-purple-950 border border-cyan-500/40 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl mb-8">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl animate-pulse pointer-events-none" />
         
         <div className="relative z-10 flex items-start gap-4 flex-1">
           <div className="p-4 rounded-2xl bg-gradient-to-tr from-cyan-500 to-purple-600 text-white shadow-lg animate-pulse">
@@ -691,7 +788,7 @@ export default function LumoMatch({
                 </span>
               )}
             </h1>
-            <p className="text-xs text-slate-300 mt-2 leading-relaxed max-w-2xl">
+            <p className="text-xs md:text-sm font-semibold text-slate-200 mt-2 leading-relaxed max-w-2xl">
               {lang === 'ar' 
                 ? 'استكشف المدارات الكونية وابحث عن شركاء الدراسة، البرمجة، الألعاب واللغات بذكاء فائق يستند للتوافق الشخصي والخلفية العلمية.'
                 : 'Discover and connect with your perfect study, language, coding, or gaming match based on cognitive compatibility, interest overlays, and communication styles.'}
@@ -706,7 +803,7 @@ export default function LumoMatch({
               playSynthSound(700, 'sine', 0.05);
               setShowVerifyModal(true);
             }}
-            className="w-full md:w-auto px-4.5 py-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-bold text-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full md:w-auto px-4.5 py-3 rounded-2xl bg-slate-900/90 border border-cyan-500/40 hover:bg-slate-800 text-xs font-black text-cyan-300 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
           >
             <Shield className="w-4 h-4 text-cyan-400" />
             <span>{lang === 'ar' ? 'توثيق الحساب 🛡️' : 'Verify Account 🛡️'}</span>
@@ -714,149 +811,184 @@ export default function LumoMatch({
         </div>
       </div>
 
-      {/* AI RADAR SCANNER ENGINE */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* MATCH SETTINGS, INTEREST TAGS & AI SEARCH CONTROLLER */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-8">
         
-        {/* Left Column: AI Prompt Bar & Radar Grid (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
+        {/* Left: AI Search + Interest Tags Management (7 cols) */}
+        <div className="lg:col-span-7 flex flex-col gap-6">
           
           {/* AI Prompt Input Bar */}
-          <div className="glass-panel p-5 rounded-3xl border border-white/10 bg-[#0a0a0f]/80 flex flex-col gap-3">
+          <div className="cosmic-glass-panel p-5 rounded-3xl border border-cyan-500/40 bg-[#090d18] flex flex-col gap-3 shadow-2xl">
             <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
               <span>{lang === 'ar' ? 'محرك البحث الكوني من Lodavia AI 🤖' : 'Lodavia AI Cosmic Prompt Search 🤖'}</span>
             </h3>
             
             <form onSubmit={handleAISearchPrompt} className="flex gap-2">
-              <div className="flex-1 flex items-center bg-black/40 border border-white/10 rounded-2xl px-3.5 py-2">
-                <Search className="w-4 h-4 text-slate-500 shrink-0" />
+              <div className="flex-1 flex items-center bg-[#050812] border border-cyan-500/50 rounded-2xl px-3.5 py-2.5">
+                <Search className="w-4 h-4 text-cyan-400 shrink-0" />
                 <input 
                   type="text"
                   value={aiPromptGoal}
                   onChange={(e) => setAiPromptGoal(e.target.value)}
                   placeholder={lang === 'ar' ? 'مثال: ابحث عن شريك لتعلم لغة رست وممارسة الإنجليزية...' : 'e.g. Find me a mentor for React scaling who speaks Arabic...'}
-                  className="bg-transparent border-none text-xs text-white focus:outline-none focus:ring-0 w-full px-2"
+                  className="bg-transparent border-none text-xs text-white placeholder:text-slate-400 font-semibold focus:outline-none focus:ring-0 w-full px-2"
                 />
               </div>
               <button 
                 type="submit"
-                className="px-4.5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs transition-all active:scale-95 cursor-pointer"
+                className="px-4.5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-400 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs transition-all active:scale-95 cursor-pointer shadow-lg shadow-cyan-500/30 shrink-0"
               >
                 {lang === 'ar' ? 'طابقني ⚡' : 'Match Me ⚡'}
               </button>
             </form>
             
+            {/* Quick Preset Prompts */}
+            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+              <span className="text-[10px] font-bold text-slate-300">{lang === 'ar' ? 'مقترحات سريعة:' : 'Quick Prompts:'}</span>
+              {[
+                { ar: 'شريك برمجيات Rust 🦀', en: 'Rust Coding Buddy 🦀' },
+                { ar: 'تبادل لغات مع اليابان 🇯🇵', en: 'Japan Language Exchange 🇯🇵' },
+                { ar: 'موجه مشاريع SaaS 🚀', en: 'SaaS Startup Mentor 🚀' },
+                { ar: 'شريك ألعاب تنافسية 🎮', en: 'Competitive Gaming 🎮' }
+              ].map((preset, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    playSynthSound(500, 'sine', 0.04);
+                    const promptText = lang === 'ar' ? preset.ar : preset.en;
+                    setAiPromptGoal(promptText);
+                  }}
+                  className="px-2.5 py-1 rounded-full bg-cyan-500/20 hover:bg-cyan-500/35 border border-cyan-400/40 text-[10px] font-extrabold text-cyan-200 transition-all cursor-pointer shadow-sm"
+                >
+                  {lang === 'ar' ? preset.ar : preset.en}
+                </button>
+              ))}
+            </div>
+
             {aiPromptExplanation && (
               <motion.div 
                 initial={{ opacity: 0, y: 5 }} 
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 rounded-2xl bg-cyan-500/5 border border-cyan-400/20 text-[10px] text-cyan-300 flex items-start gap-2"
+                className="p-3 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 text-[11px] text-cyan-200 flex items-start gap-2"
               >
-                <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                <p className="leading-relaxed">{lang === 'ar' ? aiPromptExplanation.ar : aiPromptExplanation.en}</p>
+                <Info className="w-4 h-4 text-cyan-300 shrink-0 mt-0.5" />
+                <p className="leading-relaxed font-semibold">{lang === 'ar' ? aiPromptExplanation.ar : aiPromptExplanation.en}</p>
               </motion.div>
             )}
           </div>
 
-          {/* Interactive Radar Screen */}
-          <div className="glass-panel p-6 rounded-3xl border border-white/10 bg-[#0a0a14] flex flex-col items-center justify-center relative overflow-hidden aspect-square">
-            
-            {/* Spinning sweeps */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-4/5 h-4/5 rounded-full border border-dashed border-white/5" />
-              <div className="w-3/5 h-3/5 rounded-full border border-dashed border-white/5" />
-              <div className="w-2/5 h-2/5 rounded-full border border-dashed border-cyan-500/10" />
-              <div className="w-1/5 h-1/5 rounded-full border border-cyan-500/20 bg-cyan-500/5" />
+          {/* User Interests Manager Card (Added per user request) */}
+          <div className="cosmic-glass-panel p-5 rounded-3xl border border-cyan-500/40 bg-[#090d18] flex flex-col gap-3.5 shadow-2xl">
+            <div className="flex items-center justify-between pb-2 border-b border-cyan-500/20">
+              <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                <Tag className="w-4 h-4 text-cyan-400" />
+                <span>{lang === 'ar' ? 'اهتماماتي للتطابق الكوني ⭐' : 'My Match Interests ⭐'}</span>
+              </h3>
+              <span className="text-[10px] text-cyan-300 font-bold bg-cyan-500/10 px-2.5 py-0.5 rounded-full border border-cyan-400/30">
+                {userInterests.length} {lang === 'ar' ? 'اهتمامات نشطة' : 'Active Interests'}
+              </span>
             </div>
 
-            {/* Radar swept lines */}
-            <AnimatePresence>
-              {isScanning && (
-                <motion.div 
-                  initial={{ rotate: 0 }}
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
-                  className="absolute w-full h-full border-l border-cyan-500/30 origin-center pointer-events-none bg-gradient-to-r from-cyan-500/10 to-transparent"
-                  style={{ borderRadius: '50%' }}
+            <p className="text-[11px] text-slate-300 font-medium leading-relaxed">
+              {lang === 'ar' 
+                ? 'أدخل اهتماماتك أو اختر من الوسوم المقترحة، تُستخدم كأساس فوري لحساب التوافق واستخراج الاهتمامات المشتركة مع الشركاء:' 
+                : 'Add custom interest tags or pick from presets to calculate live compatibility and highlight shared interests:'}
+            </p>
+
+            {/* Interest Input form */}
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddInterest(newInterestInput);
+              }}
+              className="flex gap-2"
+            >
+              <div className="flex-1 flex items-center bg-[#050812] border border-cyan-500/50 rounded-2xl px-3.5 py-2">
+                <Plus className="w-4 h-4 text-cyan-400 shrink-0" />
+                <input 
+                  type="text"
+                  value={newInterestInput}
+                  onChange={(e) => setNewInterestInput(e.target.value)}
+                  placeholder={lang === 'ar' ? 'أضف اهتماماً (مثال: سفر، تصوير، برمجة، رياضة)...' : 'Add interest (e.g. Travel, Photography, Coding)...'}
+                  className="bg-transparent border-none text-xs text-white placeholder:text-slate-400 font-semibold focus:outline-none focus:ring-0 w-full px-2"
                 />
-              )}
-            </AnimatePresence>
+              </div>
+              <button 
+                type="submit"
+                className="px-4 py-2 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition-all active:scale-95 cursor-pointer shadow-md shrink-0 flex items-center gap-1"
+              >
+                <span>{lang === 'ar' ? '+ إضافة' : '+ Add'}</span>
+              </button>
+            </form>
 
-            {/* Orbiting Avatar nodes */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              {mockProfiles.slice(0, 5).map((profile, idx) => {
-                const angle = (idx * 72 * Math.PI) / 180;
-                const distance = 100 + (idx % 2 === 0 ? 30 : -20);
-                const x = Math.cos(angle) * distance;
-                const y = Math.sin(angle) * distance;
-
-                return (
-                  <motion.div 
-                    key={profile.id}
-                    className="absolute w-10 h-10 rounded-full border-2 border-cyan-400/40 p-0.5 bg-slate-950 overflow-hidden shadow-lg shadow-cyan-500/10"
-                    style={{ x, y }}
-                    animate={isScanning ? { scale: [1, 1.2, 1], opacity: [0.4, 1, 0.4] } : {}}
-                    transition={{ repeat: Infinity, duration: 2, delay: idx * 0.4 }}
+            {/* Active User Interest Tags */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {userInterests.map((interest, idx) => (
+                <span 
+                  key={idx}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-400/40 text-xs font-black text-cyan-200 flex items-center gap-1.5 shadow-sm group"
+                >
+                  <Tag className="w-3 h-3 text-cyan-400" />
+                  <span>#{interest}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveInterest(interest)}
+                    className="w-4 h-4 rounded-full bg-cyan-400/20 hover:bg-red-500/80 hover:text-white flex items-center justify-center text-[10px] transition-colors cursor-pointer text-cyan-300 ml-1"
+                    title={lang === 'ar' ? 'حذف الاهتمام' : 'Remove interest'}
                   >
-                    <img src={profile.avatar} alt={profile.name} className="w-full h-full rounded-full object-cover" />
-                  </motion.div>
-                );
-              })}
+                    ×
+                  </button>
+                </span>
+              ))}
             </div>
 
-            {/* Central scanning state display */}
-            <div className="relative z-10 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-500 to-purple-600 p-0.5 animate-pulse flex items-center justify-center mb-4">
-                <Globe className="w-8 h-8 text-white" />
+            {/* Popular Presets */}
+            <div className="flex flex-col gap-1.5 pt-2 border-t border-cyan-500/15">
+              <span className="text-[10px] font-bold text-slate-400">{lang === 'ar' ? 'وسوم مقترحة للإضافة السريعة:' : 'Quick Presets:'}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {popularInterestPresets.map((preset, idx) => {
+                  const label = lang === 'ar' ? preset.ar : preset.en;
+                  const isAdded = userInterests.some(i => i.toLowerCase() === preset.en.toLowerCase() || i.toLowerCase() === preset.ar.toLowerCase());
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      disabled={isAdded}
+                      onClick={() => handleAddInterest(preset.en)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
+                        isAdded 
+                          ? 'bg-white/5 border border-white/10 text-slate-500 cursor-not-allowed' 
+                          : 'bg-cyan-500/15 hover:bg-cyan-500/30 border border-cyan-400/30 text-cyan-200'
+                      }`}
+                    >
+                      <span>{preset.icon}</span>
+                      <span>{label}</span>
+                      {!isAdded && <span className="text-[9px] text-cyan-400 font-bold">+</span>}
+                    </button>
+                  );
+                })}
               </div>
-
-              {isScanning ? (
-                <div>
-                  <h4 className="text-xs font-black text-cyan-400 animate-pulse uppercase tracking-wider">
-                    {lang === 'ar' ? 'جاري فحص المدارات الكونية...' : 'Scanning Cosmic Nodes...'}
-                  </h4>
-                  <div className="w-40 bg-white/10 h-1 rounded-full overflow-hidden mt-2 mx-auto">
-                    <motion.div 
-                      className="bg-cyan-400 h-full" 
-                      initial={{ width: '0%' }}
-                      animate={{ width: `${scanProgress}%` }}
-                      transition={{ duration: 0.15 }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <h4 className="text-xs font-black text-white uppercase tracking-wider">
-                    {lang === 'ar' ? 'الرادار الكوني نشط' : 'Cosmic Radar Online'}
-                  </h4>
-                  <p className="text-[10px] text-slate-400 mt-1 max-w-xs leading-relaxed">
-                    {lang === 'ar' 
-                      ? 'حدد تصنيفاً للبحث عن شركاء، أو استخدم شريط التوافق لتصفية العقد.' 
-                      : 'Select a category or prompt to align matching compatibility parameters.'}
-                  </p>
-                  <button 
-                    onClick={handleTriggerScan}
-                    className="mt-4 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-bold text-cyan-400 cursor-pointer"
-                  >
-                    {lang === 'ar' ? 'إعادة الفحص والمسح 🔄' : 'Re-Scan Channels 🔄'}
-                  </button>
-                </div>
-              )}
             </div>
           </div>
+        </div>
 
-          {/* Privacy & Safety Quick Controller */}
-          <div className="glass-panel p-5 rounded-3xl border border-white/10 bg-[#0a0a0f]/80 flex flex-col gap-3">
-            <div className="flex justify-between items-center pb-2 border-b border-white/5">
+        {/* Right: Privacy & Safety Controls + Categories (5 cols) */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          
+          {/* Privacy & Safety Quick Controller (Preserved in full) */}
+          <div className="cosmic-glass-panel p-5 rounded-3xl border border-cyan-500/40 bg-[#090d18] flex flex-col gap-3 shadow-2xl">
+            <div className="flex justify-between items-center pb-2 border-b border-cyan-500/20">
               <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
                 <Settings className="w-4 h-4 text-cyan-400" />
                 <span>{lang === 'ar' ? 'إعدادات الخصوصية والأمان 🛡️' : 'Privacy & Safety Controls 🛡️'}</span>
               </h3>
             </div>
 
-            <div className="flex flex-col gap-2.5 pt-1">
-              <label className="flex items-center justify-between text-xs cursor-pointer">
-                <span className="text-slate-300">{lang === 'ar' ? 'الظهور في رادار المطابقة الكونية' : 'Visible in Match Radar'}</span>
+            <div className="flex flex-col gap-3 pt-1">
+              <label className="flex items-center justify-between text-xs font-black cursor-pointer text-slate-100 hover:text-cyan-300 transition-colors">
+                <span>{lang === 'ar' ? 'الظهور في رادار المطابقة الكونية' : 'Visible in Match Radar'}</span>
                 <input 
                   type="checkbox" 
                   checked={privacyVisible}
@@ -864,12 +996,12 @@ export default function LumoMatch({
                     playSynthSound(400, 'sine', 0.05);
                     setPrivacyVisible(e.target.checked);
                   }}
-                  className="rounded bg-black border-white/10 text-cyan-500 focus:ring-0 focus:ring-offset-0"
+                  className="rounded bg-slate-950 border-cyan-400 text-cyan-400 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5 accent-cyan-400"
                 />
               </label>
 
-              <label className="flex items-center justify-between text-xs cursor-pointer">
-                <span className="text-slate-300">{lang === 'ar' ? 'مطابقة من نفس الجنس فقط' : 'Same-Gender Matching Only'}</span>
+              <label className="flex items-center justify-between text-xs font-black cursor-pointer text-slate-100 hover:text-cyan-300 transition-colors">
+                <span>{lang === 'ar' ? 'مطابقة من نفس الجنس فقط' : 'Same-Gender Matching Only'}</span>
                 <input 
                   type="checkbox" 
                   checked={privacySameGender}
@@ -877,12 +1009,12 @@ export default function LumoMatch({
                     playSynthSound(400, 'sine', 0.05);
                     setPrivacySameGender(e.target.checked);
                   }}
-                  className="rounded bg-black border-white/10 text-cyan-500 focus:ring-0 focus:ring-offset-0"
+                  className="rounded bg-slate-950 border-cyan-400 text-cyan-400 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5 accent-cyan-400"
                 />
               </label>
 
-              <label className="flex items-center justify-between text-xs cursor-pointer">
-                <span className="text-slate-300">{lang === 'ar' ? 'إخفاء نسبة التوافق في البطاقات' : 'Hide Compatibility Score'}</span>
+              <label className="flex items-center justify-between text-xs font-black cursor-pointer text-slate-100 hover:text-cyan-300 transition-colors">
+                <span>{lang === 'ar' ? 'إخفاء نسبة التوافق في البطاقات' : 'Hide Compatibility Score'}</span>
                 <input 
                   type="checkbox" 
                   checked={privacyHideScore}
@@ -890,73 +1022,391 @@ export default function LumoMatch({
                     playSynthSound(400, 'sine', 0.05);
                     setPrivacyHideScore(e.target.checked);
                   }}
-                  className="rounded bg-black border-white/10 text-cyan-500 focus:ring-0 focus:ring-offset-0"
+                  className="rounded bg-slate-950 border-cyan-400 text-cyan-400 focus:ring-0 focus:ring-offset-0 w-4.5 h-4.5 accent-cyan-400"
                 />
               </label>
             </div>
           </div>
 
-        </div>
+          {/* Cosmic Categories Selection */}
+          <div className="cosmic-glass-panel p-5 rounded-3xl border border-cyan-500/40 bg-[#090d18] flex flex-col gap-3 shadow-2xl">
+            <span className="text-xs font-black uppercase text-cyan-400 tracking-wider flex items-center gap-1.5 pb-2 border-b border-cyan-500/20">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{lang === 'ar' ? 'فئات المطابقة الكونية:' : 'Cosmic Matching Categories:'}</span>
+            </span>
 
-        {/* Right Column: Categories tab, filters, matched profiles (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
-          
-          {/* Match categories grids */}
-          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-2">
-            {matchCategories.map((cat) => {
-              const IconComponent = cat.icon;
-              const isSelected = activeCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => {
-                    playSynthSound(500, 'sine', 0.04);
-                    setActiveCategory(cat.id);
-                  }}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
-                    isSelected 
-                      ? 'bg-gradient-to-b from-cyan-950/40 to-slate-900 border-cyan-400 text-cyan-300 shadow-md scale-105'
-                      : 'border-white/5 bg-white/5 hover:bg-white/10 text-slate-400'
-                  }`}
-                  title={lang === 'ar' ? cat.labelAr : cat.label}
-                >
-                  <IconComponent className={`w-5 h-5 ${isSelected ? 'text-cyan-400 animate-bounce' : 'text-slate-400'}`} />
-                  <span className="text-[9px] font-black tracking-tight text-center line-clamp-1">
-                    {lang === 'ar' ? cat.labelAr : cat.label}
-                  </span>
-                </button>
-              );
-            })}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {matchCategories.map((cat) => {
+                const IconComponent = cat.icon;
+                const isSelected = activeCategory === cat.id;
+                const matchCount = mockProfiles.filter(p => p.category === cat.id).length;
+
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      playSynthSound(500, 'sine', 0.04);
+                      setActiveCategory(cat.id);
+                    }}
+                    className={`px-3 py-2 rounded-2xl border flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected 
+                        ? 'bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 border-cyan-300 text-slate-950 font-black shadow-lg shadow-cyan-500/20 scale-102'
+                        : 'border-white/10 bg-slate-900/90 hover:bg-slate-800 text-slate-200 font-extrabold hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                      <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-slate-950' : 'text-cyan-400'}`} />
+                      <span className="text-xs truncate">
+                        {lang === 'ar' ? cat.labelAr : cat.label}
+                      </span>
+                    </div>
+                    <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                      isSelected ? 'bg-slate-950/30 text-slate-950' : 'bg-cyan-500/20 text-cyan-300'
+                    }`}>
+                      {matchCount}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Filtering Tools Row */}
-          <div className="glass-panel p-4.5 rounded-3xl border border-white/10 bg-[#0a0a0f]/80 flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-              <button
-                onClick={() => {
-                  playSynthSound(600, 'sine', 0.05);
-                  setShowFilters(!showFilters);
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-slate-300 transition-all cursor-pointer"
-              >
-                <Filter className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{lang === 'ar' ? 'فلاتر المطابقة الفائقة ⚙️' : 'Advanced Match Filters ⚙️'}</span>
-              </button>
+        </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-slate-400">{lang === 'ar' ? 'الحد الأدنى للتوافق:' : 'Min Compatibility:'}</span>
-                <input 
-                  type="range" 
-                  min="60" 
-                  max="95" 
-                  value={minCompatibility} 
-                  onChange={(e) => {
-                    playSynthSound(450, 'sine', 0.02);
-                    setMinCompatibility(parseInt(e.target.value));
+      </div>
+
+      {/* DYNAMIC WORKSPACE: TEMPORARY RADAR SCAN TRANSITION (3-4 SECONDS) OR PROFILE CARDS GRID */}
+      <AnimatePresence mode="wait">
+        {isScanning ? (
+          /* RADAR TRANSITION SCREEN (3-4 Seconds Scan State) */
+          <motion.div
+            key="radar-transition"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+            className="w-full flex flex-col items-center justify-center py-6"
+          >
+            <div className="w-full max-w-2xl cosmic-glass-panel p-6 sm:p-8 rounded-3xl border border-cyan-500/50 bg-[#060914]/95 flex flex-col items-center text-center shadow-[0_0_60px_rgba(6,182,212,0.25)] relative overflow-hidden">
+              
+              {/* Scan State Header */}
+              <div className="mb-6 flex flex-col items-center">
+                <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 text-xs font-black uppercase tracking-wider mb-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                  <span>{lang === 'ar' ? 'رادار المطابقة الكونية قيد المسح' : 'Active Cosmic Radar Sweep'}</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide flex items-center justify-center gap-2">
+                  <span>{lang === 'ar' ? 'جاري البحث عن تطابقات في مدارك... 📡⚡' : 'Searching for cosmic matches in your orbit... 📡⚡'}</span>
+                </h2>
+                <p className="text-xs text-cyan-200/90 font-medium max-w-md mt-1.5">
+                  {lang === 'ar' 
+                    ? 'يتم فحص الترددات الكونية ومطابقة الاهتمامات المشتركة وتحليل نسب التوافق الفلكي...' 
+                    : 'Scanning orbital frequencies, analyzing shared interests & cosmic compatibility scores...'}
+                </p>
+              </div>
+
+              {/* High-Tech Flat Radar Screen (Aspect Square) */}
+              <div 
+                className="w-full max-w-[340px] sm:max-w-[400px] aspect-square rounded-3xl border border-cyan-500/40 relative overflow-hidden flex items-center justify-center shadow-[0_0_40px_rgba(6,182,212,0.2)]"
+                style={{
+                  background: 'radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.16) 0%, rgba(10, 24, 52, 0.6) 35%, rgba(3, 7, 18, 0.94) 70%, #020408 100%)'
+                }}
+              >
+                {/* Top Radar Bar */}
+                <div className="absolute top-3 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+                  <span className="text-[10px] font-black uppercase text-cyan-300 tracking-wider flex items-center gap-1.5 bg-slate-950/90 px-3 py-1 rounded-full border border-cyan-400/40 shadow-md">
+                    <Compass className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                    <span>{lang === 'ar' ? 'مسح الرادار الكوني 📡' : 'Radar Sweep Mode 📡'}</span>
+                  </span>
+                  <span className="text-[9px] font-mono text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-400/40 font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{lang === 'ar' ? 'العقد المكتشفة: 5' : 'Nodes Active: 5'}</span>
+                  </span>
+                </div>
+
+                {/* Concentric Radar Range Rings & Azimuth Crosshairs */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  {/* Outer Boundary Ring (88%) */}
+                  <div className="w-[88%] h-[88%] rounded-full border border-cyan-400/25 relative flex items-center justify-center">
+                    <span className="absolute -top-3 text-[7px] font-mono tracking-widest text-cyan-400/60 uppercase">000° N • OUTER MESH</span>
+                    <span className="absolute -bottom-3 text-[7px] font-mono tracking-widest text-cyan-400/60 uppercase">180° S</span>
+                    <span className="absolute -left-4 text-[7px] font-mono tracking-widest text-cyan-400/60 uppercase">270° W</span>
+                    <span className="absolute -right-4 text-[7px] font-mono tracking-widest text-cyan-400/60 uppercase">090° E</span>
+                  </div>
+                  {/* 66% Ring */}
+                  <div className="w-[66%] h-[66%] rounded-full border border-dashed border-cyan-400/20 absolute flex items-center justify-center">
+                    <span className="absolute top-1 text-[6.5px] font-mono text-cyan-500/40">ZONE B • 75%</span>
+                  </div>
+                  {/* 44% Ring */}
+                  <div className="w-[44%] h-[44%] rounded-full border border-cyan-400/25 absolute flex items-center justify-center">
+                    <span className="absolute top-1 text-[6.5px] font-mono text-cyan-400/50">ZONE A • 50%</span>
+                  </div>
+                  {/* 22% Inner Ring */}
+                  <div className="w-[22%] h-[22%] rounded-full border border-dashed border-cyan-400/35 bg-cyan-500/5 absolute flex items-center justify-center">
+                    <span className="absolute top-0.5 text-[6px] font-mono text-cyan-300/60">CORE 25%</span>
+                  </div>
+                  {/* Azimuth Hairline Crosshairs */}
+                  <div className="absolute w-[88%] h-[0.5px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+                  <div className="absolute h-[88%] w-[0.5px] bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent" />
+                </div>
+
+                {/* Tactical Corner Brackets */}
+                <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+                <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-cyan-400/60 pointer-events-none" />
+                <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+                <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-cyan-400/60 pointer-events-none" />
+
+                {/* Rotating Radar Sweep Line & Luminous Trailing Beam */}
+                <motion.div 
+                  className="absolute w-[88%] h-[88%] rounded-full pointer-events-none z-10 origin-center"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: 'linear' }}
+                  style={{
+                    background: 'conic-gradient(from 0deg at 50% 50%, rgba(6, 182, 212, 0.38) 0deg, rgba(6, 182, 212, 0.15) 25deg, rgba(6, 182, 212, 0.02) 75deg, transparent 90deg, transparent 360deg)',
                   }}
-                  className="w-24 accent-cyan-400 h-1 bg-white/20 rounded-lg appearance-none" 
+                >
+                  <div 
+                    className="absolute top-0 left-1/2 w-0.5 h-1/2 bg-gradient-to-t from-cyan-300 via-sky-200 to-white -translate-x-1/2"
+                    style={{
+                      boxShadow: '0 0 14px 2px rgba(6, 182, 212, 0.9), 0 0 4px #ffffff',
+                    }}
+                  />
+                </motion.div>
+
+                {/* Sonar Pulse Rings */}
+                <motion.div
+                  className="absolute rounded-full border border-cyan-400/60 pointer-events-none z-10"
+                  initial={{ width: 0, height: 0, opacity: 0.8 }}
+                  animate={{ width: ['0%', '88%'], height: ['0%', '88%'], opacity: [0.8, 0] }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
+                  style={{
+                    boxShadow: '0 0 16px rgba(6, 182, 212, 0.4), inset 0 0 12px rgba(6, 182, 212, 0.2)',
+                  }}
                 />
-                <span className="text-xs font-black text-cyan-400">{minCompatibility}%</span>
+                <motion.div
+                  className="absolute rounded-full border border-cyan-400/50 pointer-events-none z-10"
+                  initial={{ width: 0, height: 0, opacity: 0.8 }}
+                  animate={{ width: ['0%', '88%'], height: ['0%', '88%'], opacity: [0.8, 0] }}
+                  transition={{ duration: 2.2, delay: 1.1, repeat: Infinity, ease: 'easeOut' }}
+                  style={{
+                    boxShadow: '0 0 12px rgba(6, 182, 212, 0.3)',
+                  }}
+                />
+
+                {/* Animated Data Vectors & Nodes */}
+                <svg viewBox="-160 -160 320 320" className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                  <defs>
+                    <filter id="matchPulseGlowTransition" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="2.5" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  {mockProfiles.slice(0, 5).map((profile, idx) => {
+                    const angle = (idx * 72 * Math.PI) / 180;
+                    const distance = 100 + (idx % 2 === 0 ? 25 : -20);
+                    const x = Math.cos(angle) * distance;
+                    const y = Math.sin(angle) * distance;
+                    const isTop = profile.compatibilityScore >= 95;
+                    const strokeColor = isTop ? '#D9B968' : '#06b6d4';
+
+                    return (
+                      <g key={`transition-vector-${profile.id}`}>
+                        <line 
+                          x1="0" y1="0" x2={x} y2={y} 
+                          stroke={strokeColor} 
+                          strokeOpacity={isTop ? 0.35 : 0.2} 
+                          strokeWidth="1.2" 
+                          strokeDasharray="4 4"
+                        />
+                        <motion.line 
+                          x1="0" y1="0" x2={x} y2={y} 
+                          stroke={strokeColor} 
+                          strokeOpacity={isTop ? 0.8 : 0.6} 
+                          strokeWidth="1.5" 
+                          strokeDasharray="10 24"
+                          animate={{ strokeDashoffset: [0, -34] }}
+                          transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <motion.circle 
+                          r={isTop ? "3.5" : "2.8"} 
+                          fill={isTop ? "#FDE68A" : "#ffffff"} 
+                          filter="url(#matchPulseGlowTransition)"
+                          animate={{ cx: [0, x], cy: [0, y] }}
+                          transition={{ 
+                            duration: 2.8, 
+                            repeat: Infinity, 
+                            ease: "easeInOut", 
+                            delay: idx * 0.5 
+                          }}
+                        />
+                      </g>
+                    );
+                  })}
+                </svg>
+
+                {/* Orbiting Avatar nodes */}
+                <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                  {mockProfiles.slice(0, 5).map((profile, idx) => {
+                    const angle = (idx * 72 * Math.PI) / 180;
+                    const distance = 100 + (idx % 2 === 0 ? 25 : -20);
+                    const x = Math.cos(angle) * distance;
+                    const y = Math.sin(angle) * distance;
+                    const isTopMatch = profile.compatibilityScore >= 95;
+                    const scoreWeight = (profile.compatibilityScore - 80) / 20;
+                    const nodeSize = isTopMatch ? 52 : Math.round(42 + scoreWeight * 8);
+
+                    return (
+                      <motion.div 
+                        key={`orbit-${profile.id}`}
+                        className={`absolute rounded-full border-2 p-0.5 bg-slate-950 overflow-visible z-20 flex items-center justify-center ${
+                          isTopMatch ? 'border-[#D9B968]' : 'border-cyan-400'
+                        }`}
+                        style={{ 
+                          x, 
+                          y,
+                          width: `${nodeSize}px`,
+                          height: `${nodeSize}px`,
+                          boxShadow: isTopMatch 
+                            ? '0 0 24px 3px rgba(217, 185, 104, 0.85), 0 0 8px #ffffff' 
+                            : `0 0 ${12 + scoreWeight * 12}px 2px rgba(6, 182, 212, ${0.45 + scoreWeight * 0.4}), 0 0 4px #ffffff`
+                        }}
+                        animate={{ scale: [1, 1.18, 1], opacity: [0.7, 1, 0.7] }}
+                        transition={{ repeat: Infinity, duration: 1.4, delay: idx * 0.3 }}
+                      >
+                        <div className={`absolute -inset-1.5 rounded-full animate-ping opacity-40 pointer-events-none ${
+                          isTopMatch ? 'border border-[#D9B968]' : 'border border-cyan-400'
+                        }`} />
+
+                        <img 
+                          src={profile.avatar} 
+                          alt={profile.name} 
+                          className="w-full h-full rounded-full object-cover relative z-10" 
+                        />
+
+                        <div className={`absolute -bottom-2 z-20 px-1.5 py-0.5 rounded-full text-[8px] font-black border shadow-md flex items-center gap-0.5 whitespace-nowrap ${
+                          isTopMatch 
+                            ? 'bg-amber-400 text-slate-950 border-amber-300 font-extrabold' 
+                            : 'bg-slate-950/90 text-cyan-300 border-cyan-400/50'
+                        }`}>
+                          {isTopMatch && <span>👑</span>}
+                          <span>{profile.compatibilityScore}%</span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Central dynamic scanner icon */}
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <motion.div 
+                    className="w-14 h-14 rounded-full p-0.5 flex items-center justify-center bg-gradient-to-tr from-cyan-400 to-blue-600"
+                    animate={{ 
+                      scale: [1, 1.15, 1], 
+                      boxShadow: ['0 0 20px rgba(6,182,212,0.45)', '0 0 45px rgba(6,182,212,0.9)', '0 0 20px rgba(6,182,212,0.45)'] 
+                    }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <div className="w-full h-full rounded-full bg-[#050812] flex items-center justify-center relative overflow-hidden">
+                      <Globe className="w-7 h-7 text-cyan-300 animate-spin" style={{ animationDuration: '6s' }} />
+                    </div>
+                  </motion.div>
+                </div>
+
+              </div>
+
+              {/* Real-time Progress Bar */}
+              <div className="w-full max-w-md mt-6 flex flex-col items-center gap-2">
+                <div className="flex items-center justify-between w-full text-xs font-black">
+                  <span className="text-cyan-300 animate-pulse">
+                    {lang === 'ar' ? 'جاري فحص المدارات والإشارات الكونية...' : 'Scanning Cosmic Nodes...'}
+                  </span>
+                  <span className="text-cyan-400 font-mono">{scanProgress}%</span>
+                </div>
+                <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-cyan-500/30 p-0.5">
+                  <motion.div 
+                    className="bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-500 h-full rounded-full" 
+                    initial={{ width: '0%' }}
+                    animate={{ width: `${scanProgress}%` }}
+                    transition={{ duration: 0.15 }}
+                  />
+                </div>
+              </div>
+
+            </div>
+          </motion.div>
+        ) : (
+          /* RESULTS & PROFILE CARDS GRID (Displayed cleanly after scanning ends) */
+          <motion.div
+            key="profile-cards-grid"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col gap-6"
+          >
+            {/* Action Bar: Count, Re-Scan Button & Filter Controls */}
+            <div className="cosmic-glass-panel p-4.5 rounded-3xl border border-cyan-500/30 bg-[#090d18] flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-cyan-500/10 border border-cyan-400/30">
+                  <TrendingUp className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white flex items-center gap-2">
+                    <span>
+                      {lang === 'ar' 
+                        ? `العقد المتطابقة المتوفرة (${displayProfiles.length}) 🪐` 
+                        : `Compatible Matches Found (${displayProfiles.length}) 🪐`}
+                    </span>
+                  </h3>
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    {lang === 'ar' 
+                      ? 'تم تحليل التوافق والاهتمامات المشتركة بدقة مع مدارك الكوني' 
+                      : 'Harmonically calibrated based on active interests and orbit'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end flex-wrap">
+                {/* Re-Scan Radar Button */}
+                <button 
+                  onClick={handleTriggerScan}
+                  className="px-4.5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-black cursor-pointer shadow-lg shadow-cyan-500/25 transition-all active:scale-95 flex items-center gap-2 shrink-0"
+                >
+                  <Compass className="w-4 h-4" />
+                  <span>{lang === 'ar' ? 'مسح الرادار مجدداً 🔄' : 'Re-Scan Radar 🔄'}</span>
+                </button>
+
+                {/* Filter toggle */}
+                <button
+                  onClick={() => {
+                    playSynthSound(600, 'sine', 0.05);
+                    setShowFilters(!showFilters);
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-xs text-slate-100 font-extrabold transition-all cursor-pointer border border-white/10 shrink-0"
+                >
+                  <Filter className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>{lang === 'ar' ? 'فلاتر متقدمة ⚙️' : 'Filters ⚙️'}</span>
+                </button>
+
+                {/* Compatibility Threshold Slider */}
+                <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-2xl border border-cyan-500/20">
+                  <span className="text-[10px] text-slate-300 font-bold">{lang === 'ar' ? 'الحد الأدنى:' : 'Min:'}</span>
+                  <input 
+                    type="range" 
+                    min="60" 
+                    max="95" 
+                    value={minCompatibility} 
+                    onChange={(e) => {
+                      playSynthSound(450, 'sine', 0.02);
+                      setMinCompatibility(parseInt(e.target.value));
+                    }}
+                    className="w-20 accent-cyan-400 h-1.5 bg-slate-900 rounded-lg appearance-none cursor-pointer" 
+                  />
+                  <span className="text-xs font-black text-cyan-300">{minCompatibility}%</span>
+                </div>
               </div>
             </div>
 
@@ -967,15 +1417,15 @@ export default function LumoMatch({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-3.5 border-t border-white/5"
+                  className="cosmic-glass-panel p-5 rounded-3xl border border-cyan-500/30 bg-[#090d18] shadow-xl overflow-hidden grid grid-cols-1 sm:grid-cols-4 gap-4"
                 >
                   {/* Filter Country */}
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">{lang === 'ar' ? 'الدولة والمنطقة' : 'Country'}</span>
+                    <span className="text-[10px] text-slate-300 font-bold uppercase">{lang === 'ar' ? 'الدولة والمنطقة' : 'Country'}</span>
                     <select 
                       value={filterCountry} 
                       onChange={(e) => setFilterCountry(e.target.value)}
-                      className="bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                      className="bg-slate-950 border border-cyan-500/40 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
                     >
                       <option value="All">{lang === 'ar' ? 'الكل' : 'All Countries'}</option>
                       <option value="Saudi Arabia">{lang === 'ar' ? 'السعودية' : 'Saudi Arabia'}</option>
@@ -989,11 +1439,11 @@ export default function LumoMatch({
 
                   {/* Filter Language */}
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">{lang === 'ar' ? 'اللغة المشتركة' : 'Language'}</span>
+                    <span className="text-[10px] text-slate-300 font-bold uppercase">{lang === 'ar' ? 'اللغة المشتركة' : 'Language'}</span>
                     <select 
                       value={filterLanguage} 
                       onChange={(e) => setFilterLanguage(e.target.value)}
-                      className="bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                      className="bg-slate-950 border border-cyan-500/40 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
                     >
                       <option value="All">{lang === 'ar' ? 'الكل' : 'All Languages'}</option>
                       <option value="Arabic">{lang === 'ar' ? 'العربية' : 'Arabic'}</option>
@@ -1005,11 +1455,11 @@ export default function LumoMatch({
 
                   {/* Filter Skill Level */}
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">{lang === 'ar' ? 'المستوى المعرفي' : 'Skill Level'}</span>
+                    <span className="text-[10px] text-slate-300 font-bold uppercase">{lang === 'ar' ? 'المستوى المعرفي' : 'Skill Level'}</span>
                     <select 
                       value={filterLevel} 
                       onChange={(e) => setFilterLevel(e.target.value)}
-                      className="bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
+                      className="bg-slate-950 border border-cyan-500/40 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
                     >
                       <option value="All">{lang === 'ar' ? 'الكل' : 'All Levels'}</option>
                       <option value="Expert">{lang === 'ar' ? 'خبير' : 'Expert'}</option>
@@ -1018,27 +1468,9 @@ export default function LumoMatch({
                     </select>
                   </div>
 
-                  {/* Filter Interest */}
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">{lang === 'ar' ? 'الاهتمام الأساسي' : 'Key Interest'}</span>
-                    <select 
-                      value={filterInterest} 
-                      onChange={(e) => setFilterInterest(e.target.value)}
-                      className="bg-black/60 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none"
-                    >
-                      <option value="All">{lang === 'ar' ? 'الكل' : 'All Interests'}</option>
-                      <option value="AI">{lang === 'ar' ? 'الذكاء الاصطناعي' : 'AI'}</option>
-                      <option value="React">{lang === 'ar' ? 'ريأكت' : 'React'}</option>
-                      <option value="Rust">{lang === 'ar' ? 'لغة رست' : 'Rust'}</option>
-                      <option value="Gaming">{lang === 'ar' ? 'الألعاب' : 'Gaming'}</option>
-                      <option value="Fitness">{lang === 'ar' ? 'اللياقة البدنية' : 'Fitness'}</option>
-                      <option value="Travel">{lang === 'ar' ? 'السفر' : 'Travel'}</option>
-                    </select>
-                  </div>
-
-                  {/* Filter Online Only Switch */}
-                  <div className="flex items-center justify-between sm:col-span-2 pt-4">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                  {/* Filter Online Only */}
+                  <div className="flex items-center justify-start pt-4 sm:pt-6">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-100 font-bold">
                       <input 
                         type="checkbox"
                         checked={filterOnlineOnly}
@@ -1046,159 +1478,201 @@ export default function LumoMatch({
                           playSynthSound(500, 'sine', 0.05);
                           setFilterOnlineOnly(e.target.checked);
                         }}
-                        className="rounded bg-black border-white/10 text-cyan-500 focus:ring-0 focus:ring-offset-0"
+                        className="rounded bg-slate-950 border-cyan-400 text-cyan-400 focus:ring-0 w-4 h-4 accent-cyan-400"
                       />
-                      <span>{lang === 'ar' ? 'إظهار الأعضاء المتصلين بالإنترنت حالياً فقط 🟢' : 'Show online users only 🟢'}</span>
+                      <span>{lang === 'ar' ? 'المتصلين فقط 🟢' : 'Online only 🟢'}</span>
                     </label>
                   </div>
-
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
 
-          {/* Matched user lists cards */}
-          <div className="flex flex-col gap-4">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-cyan-400" />
-              <span>
-                {lang === 'ar' 
-                  ? `العقد المتطابقة المتوفرة (${displayProfiles.length})` 
-                  : `Compatible Cosmic Matches Found (${displayProfiles.length})`}
-              </span>
-            </h3>
-
-            {isScanning ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="w-12 h-12 rounded-full border-4 border-cyan-400/20 border-t-cyan-400 animate-spin" />
-                <p className="text-xs text-slate-500 animate-pulse">{lang === 'ar' ? 'جاري جلب ملفات التوافق الكوانتي...' : 'Synthesizing compatible cosmic profiles...'}</p>
-              </div>
-            ) : displayProfiles.length === 0 ? (
-              <div className="glass-panel p-12 text-center text-slate-500 rounded-3xl text-xs border border-white/5">
-                {lang === 'ar' 
-                  ? 'لم يتم العثور على شركاء يطابقون الفلاتر المحددة حالياً. حاول تعديل النطاق أو الفئة.' 
-                  : 'No buddies found matching your current filter specs. Try expanding interests or compatibility score.'}
+            {/* Profile Cards Grid View (Responsive grid replacing abstract radar nodes) */}
+            {displayProfiles.length === 0 ? (
+              <div className="cosmic-glass-panel p-12 text-center text-slate-200 font-bold rounded-3xl text-sm border border-cyan-500/40 bg-[#090d18] flex flex-col items-center gap-3">
+                <AlertCircle className="w-8 h-8 text-cyan-400 animate-pulse" />
+                <p>
+                  {lang === 'ar' 
+                    ? 'لم يتم العثور على شركاء يطابقون الفلاتر المحددة حالياً. حاول تعديل النطاق أو إضافة المزيد من الاهتمامات.' 
+                    : 'No cosmic buddies found matching current filters. Try adjusting criteria or adding more interests.'}
+                </p>
+                <button
+                  onClick={handleTriggerScan}
+                  className="mt-2 px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 text-xs font-black cursor-pointer"
+                >
+                  {lang === 'ar' ? 'مسح الرادار مجدداً 🔄' : 'Re-Scan Radar 🔄'}
+                </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {displayProfiles.map((profile) => {
                   const isConnected = connections.includes(profile.id);
+                  const effectiveScore = getCalculatedScore(profile);
+                  const topShared = getTopSharedInterests(profile);
+
                   return (
                     <motion.div 
                       key={profile.id}
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="glass-panel p-5 rounded-3xl border border-white/10 bg-gradient-to-b from-[#0c0c16] to-black/90 hover:border-cyan-500/25 transition-all flex flex-col md:flex-row gap-5 justify-between relative group"
+                      className="cosmic-glass-panel p-5.5 rounded-3xl border border-cyan-500/30 hover:border-cyan-400/70 bg-gradient-to-b from-[#090d1a] to-[#040710] hover:shadow-[0_0_35px_rgba(6,182,212,0.22)] transition-all flex flex-col justify-between group relative overflow-hidden"
                     >
-                      {/* Left: Avatar, Name, Country, Badges, compatibility */}
-                      <div className="flex gap-4">
-                        <div className="relative">
-                          {/* Pulsing online marker */}
-                          {profile.isOnline && (
-                            <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#0c0c16] z-10 animate-pulse" />
-                          )}
-                          <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-cyan-400/40 transition-colors">
-                            <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover" />
+                      {/* Top Row: Avatar, Identity, Compatibility Score */}
+                      <div>
+                        <div className="flex items-start justify-between gap-3 mb-4">
+                          <div className="flex items-center gap-3.5">
+                            {/* Prominent Avatar */}
+                            <div className="relative shrink-0">
+                              {profile.isOnline && (
+                                <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#090d1a] z-10 animate-pulse shadow-[0_0_8px_#34d399]" />
+                              )}
+                              <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-cyan-500/40 group-hover:border-cyan-400 transition-colors shadow-md">
+                                <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover" />
+                              </div>
+                            </div>
+
+                            {/* Name & Region */}
+                            <div>
+                              <h4 className="text-base font-black text-white group-hover:text-cyan-300 transition-colors flex items-center gap-1.5 flex-wrap">
+                                <span>{lang === 'ar' ? profile.nameAr : profile.name}</span>
+                                {profile.age && (
+                                  <span className="text-[10px] text-slate-400 font-bold">({profile.age})</span>
+                                )}
+                              </h4>
+                              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                <span className="text-[9px] bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded-full font-black tracking-widest uppercase flex items-center gap-1 border border-cyan-400/20">
+                                  <MapPin className="w-2.5 h-2.5 text-cyan-400" />
+                                  <span>{lang === 'ar' ? profile.countryAr : profile.country}</span>
+                                </span>
+                                {profile.level && (
+                                  <span className="text-[9px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full font-bold">
+                                    {lang === 'ar' ? profile.levelAr || profile.level : profile.level}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
+
+                          {/* Compatibility Score (hidden if privacyHideScore is set) */}
+                          {!privacyHideScore ? (
+                            <div className="text-right shrink-0">
+                              <span className="text-[9px] text-slate-400 block uppercase tracking-wider font-bold">
+                                {lang === 'ar' ? 'التوافق الكوني' : 'Match'}
+                              </span>
+                              <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-sky-300">
+                                {effectiveScore}%
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="text-right shrink-0">
+                              <span className="text-[9px] text-cyan-400 font-black bg-cyan-500/10 px-2 py-1 rounded-lg border border-cyan-400/20">
+                                {lang === 'ar' ? 'متوافق ⭐' : 'Matched ⭐'}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
-                        <div>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <h4 className="text-sm font-black text-white group-hover:text-cyan-300 transition-colors">
-                              {lang === 'ar' ? profile.nameAr : profile.name}
-                            </h4>
-                            {profile.age && (
-                              <span className="text-[10px] text-slate-400 font-bold">({profile.age})</span>
-                            )}
-                            <span className="text-[9px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded font-black tracking-widest uppercase flex items-center gap-1">
-                              <MapPin className="w-2.5 h-2.5" />
-                              <span>{lang === 'ar' ? profile.countryAr : profile.country}</span>
+                        {/* Top 2-3 Shared Interests Highlight */}
+                        <div className="p-3 rounded-2xl bg-cyan-500/10 border border-cyan-400/25 mb-3 flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between text-[10px] font-black text-cyan-300 uppercase tracking-wide">
+                            <span className="flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-cyan-400" />
+                              <span>{lang === 'ar' ? 'أهم الاهتمامات المشتركة ⭐' : 'Top Shared Interests ⭐'}</span>
                             </span>
                           </div>
-
-                          {/* Matching summary explanation from Lodavia AI */}
-                          <div className="mt-2 p-2.5 rounded-xl bg-purple-500/5 border border-purple-500/15 text-[10px] text-purple-300 flex items-start gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
-                            <p className="leading-relaxed font-medium">
-                              {lang === 'ar' ? profile.explanationAr : profile.explanation}
-                            </p>
-                          </div>
-
-                          {/* Key parameters row */}
-                          <div className="flex flex-wrap gap-1.5 mt-3">
-                            {(lang === 'ar' ? profile.interestsAr : profile.interests).map((interest, i) => (
-                              <span key={i} className="text-[9px] font-bold text-slate-400 bg-white/5 border border-white/5 px-2 py-1 rounded-lg">
-                                #{interest}
+                          <div className="flex flex-wrap gap-1.5">
+                            {topShared.map((item, i) => (
+                              <span 
+                                key={i}
+                                className={`text-[10px] font-black px-2.5 py-1 rounded-xl flex items-center gap-1 transition-all ${
+                                  item.isDirectMatch 
+                                    ? 'bg-gradient-to-r from-cyan-500/30 to-blue-600/30 border border-cyan-400/50 text-cyan-200 shadow-sm' 
+                                    : 'bg-white/5 border border-white/10 text-slate-300'
+                                }`}
+                              >
+                                <span>#{lang === 'ar' ? item.ar : item.en}</span>
                               </span>
                             ))}
                           </div>
                         </div>
+
+                        {/* AI Match Explanation */}
+                        <div className="p-2.5 rounded-xl bg-purple-500/5 border border-purple-500/15 text-[10px] text-purple-200 flex items-start gap-1.5 mb-4">
+                          <Info className="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5" />
+                          <p className="leading-relaxed font-medium line-clamp-2">
+                            {lang === 'ar' ? profile.explanationAr : profile.explanation}
+                          </p>
+                        </div>
                       </div>
 
-                      {/* Right: Compatibility score & quick actions */}
-                      <div className="flex flex-col justify-between items-end gap-4 min-w-[140px] border-t md:border-t-0 pt-4 md:pt-0 border-white/5">
+                      {/* Bottom Action Area: Prominent "بدء محادثة" Button + Secondary Actions */}
+                      <div className="flex flex-col gap-2 pt-3 border-t border-white/5">
                         
-                        {!privacyHideScore && (
-                          <div className="text-right">
-                            <span className="text-[9px] text-slate-400 block uppercase tracking-wider">{lang === 'ar' ? 'التوافق الكوني' : 'Cosmic Match'}</span>
-                            <span className="text-lg font-black text-gradient bg-gradient-to-r from-cyan-400 to-purple-400">
-                              {profile.compatibilityScore}%
-                            </span>
-                          </div>
-                        )}
+                        {/* PRIMARY ACTION: "بدء محادثة" (Start Conversation) */}
+                        <button
+                          onClick={() => {
+                            playSynthSound(600, 'sine', 0.05);
+                            setActiveChatProfile(profile);
+                            setCustomMessages([
+                              { 
+                                sender: 'them', 
+                                text: lang === 'ar' 
+                                  ? `مرحباً! لاحظت أننا نتشارك اهتمامات في ${topShared.map(t => t.ar).join(' و ')}. يسعدني التواصل معك!` 
+                                  : `Hello! I noticed we share interests in ${topShared.map(t => t.en).join(', ')}. Excited to connect!`, 
+                                time: 'Just now' 
+                              }
+                            ]);
+                          }}
+                          className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-400 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/25"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          <span>{lang === 'ar' ? 'بدء محادثة 💬' : 'Start Conversation 💬'}</span>
+                        </button>
 
-                        {/* Action buttons row */}
-                        <div className="flex gap-1.5 w-full flex-wrap justify-end">
-                          
-                          {/* Connect Button */}
+                        {/* Secondary Action Row: Connect, Video, Voice, Profile */}
+                        <div className="flex items-center gap-1.5 justify-between">
+                          {/* Connect Toggle */}
                           <button
                             onClick={() => handleConnect(profile)}
-                            className={`flex-1 md:flex-initial px-3.5 py-2 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                            className={`flex-1 py-1.5 px-2.5 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1 cursor-pointer border ${
                               isConnected 
-                                ? 'bg-cyan-500/20 border border-cyan-400 text-cyan-300' 
-                                : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950'
+                                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300' 
+                                : 'bg-slate-900 border-white/10 hover:border-cyan-400/40 text-slate-200'
                             }`}
                           >
-                            {isConnected ? <Check className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+                            {isConnected ? <Check className="w-3 h-3 text-cyan-400" /> : <UserPlus className="w-3 h-3 text-slate-300" />}
                             <span>{isConnected ? (lang === 'ar' ? 'متصل' : 'Connected') : (lang === 'ar' ? 'تواصل' : 'Connect')}</span>
                           </button>
 
-                          {/* Quick Message */}
-                          <button
-                            onClick={() => {
-                              playSynthSound(600, 'sine', 0.05);
-                              setActiveChatProfile(profile);
-                              setCustomMessages([
-                                { sender: 'them', text: lang === 'ar' ? `مرحباً! لقد تطابقنا في ${activeCategory === 'coding' ? 'البرمجة' : 'الدراسة'}. هل أنت متفرغ للتواصل؟` : `Hi! We matched in ${activeCategory}. Are you free to collaborate?`, time: '10 mins ago' }
-                              ]);
-                            }}
-                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 cursor-pointer"
-                            title={lang === 'ar' ? 'إرسال رسالة' : 'Send Message'}
-                          >
-                            <MessageSquare className="w-3.5 h-3.5" />
-                          </button>
-
-                          {/* Video call */}
+                          {/* Video Call */}
                           <button
                             onClick={() => handleSimulateCall(profile, 'video')}
-                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 cursor-pointer"
+                            className="p-1.5 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-white/10 hover:border-cyan-400/40 cursor-pointer transition-colors"
                             title={lang === 'ar' ? 'اتصال مرئي' : 'Video Call'}
                           >
-                            <Video className="w-3.5 h-3.5" />
+                            <Video className="w-3.5 h-3.5 text-cyan-400" />
                           </button>
 
-                          {/* Profile detail */}
+                          {/* Voice Call */}
+                          <button
+                            onClick={() => handleSimulateCall(profile, 'voice')}
+                            className="p-1.5 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-white/10 hover:border-cyan-400/40 cursor-pointer transition-colors"
+                            title={lang === 'ar' ? 'اتصال صوتي' : 'Voice Call'}
+                          >
+                            <Phone className="w-3.5 h-3.5 text-cyan-400" />
+                          </button>
+
+                          {/* View Profile */}
                           <button
                             onClick={() => {
                               playSynthSound(650, 'sine', 0.05);
                               setProfileDetail(profile);
                             }}
-                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 cursor-pointer"
+                            className="p-1.5 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-white/10 hover:border-cyan-400/40 cursor-pointer transition-colors"
                             title={lang === 'ar' ? 'عرض الملف' : 'View Profile'}
                           >
-                            <User className="w-3.5 h-3.5" />
+                            <User className="w-3.5 h-3.5 text-cyan-400" />
                           </button>
-
                         </div>
 
                       </div>
@@ -1207,11 +1681,9 @@ export default function LumoMatch({
                 })}
               </div>
             )}
-          </div>
-
-        </div>
-
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* MODAL 1: AI ICEBREAKERS */}
       <AnimatePresence>
@@ -1276,85 +1748,22 @@ export default function LumoMatch({
         )}
       </AnimatePresence>
 
-      {/* MODAL 2: HIGH FIDELITY CALL OVERLAY */}
-      <AnimatePresence>
-        {activeCall && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md rounded-3xl glass-panel border border-white/10 bg-[#08080c] p-8 flex flex-col items-center justify-center text-center gap-6 relative shadow-[0_0_60px_rgba(168,85,247,0.15)]"
-            >
-              <div className="absolute top-4 right-4 text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                {activeCall.type === 'voice' ? 'Audio call' : 'Video call'}
-              </div>
-
-              {/* Glowing Call wave circles */}
-              <div className="relative flex items-center justify-center w-36 h-36">
-                <div className="absolute inset-0 rounded-full bg-cyan-500/10 animate-ping" />
-                <div className="absolute inset-2 rounded-full bg-purple-500/10 animate-ping [animation-delay:0.5s]" />
-                <div className="w-24 h-24 rounded-full border-4 border-cyan-400 p-1 overflow-hidden z-10 relative">
-                  <img src={activeCall.profile.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-base font-black text-white">
-                  {lang === 'ar' ? activeCall.profile.nameAr : activeCall.profile.name}
-                </h3>
-                <span className="text-xs text-slate-400 block mt-1">
-                  {activeCall.status === 'calling' && (lang === 'ar' ? 'جاري الاتصال بالعقدة...' : 'Connecting virtual channel...')}
-                  {activeCall.status === 'connected' && (lang === 'ar' ? 'الاتصال نشط ومؤمن 🔒' : 'Secure quantum connection active 🔒')}
-                  {activeCall.status === 'ended' && (lang === 'ar' ? 'تم إنهاء المكالمة' : 'Call finished')}
-                </span>
-              </div>
-
-              {/* Timer when connected */}
-              {activeCall.status === 'connected' && (
-                <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/20 text-xs font-mono text-emerald-400 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>{formatTime(callTimer)}</span>
-                </div>
-              )}
-
-              {/* Interactive bounce equalizer during live calls */}
-              {activeCall.status === 'connected' && (
-                <div className="flex items-end justify-center gap-1 h-6">
-                  {[1, 2, 3, 4, 5, 6, 7].map(val => (
-                    <motion.div 
-                      key={val}
-                      className="w-1 bg-cyan-400 rounded-full"
-                      animate={{ height: [4, 24, 4] }}
-                      transition={{ repeat: Infinity, duration: 0.6 + val * 0.1, ease: 'easeInOut' }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Call Actions */}
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={() => {
-                    playSynthSound(500, 'sine', 0.05);
-                    setIsCallMuted(!isCallMuted);
-                  }}
-                  className={`p-4 rounded-full transition-all cursor-pointer ${isCallMuted ? 'bg-red-500 text-white' : 'bg-white/5 hover:bg-white/10 text-slate-300'}`}
-                >
-                  <Phone className="w-5 h-5 rotate-135" />
-                </button>
-
-                <button
-                  onClick={handleEndCall}
-                  className="p-4 rounded-full bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-500/25 transition-all cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* MODAL 2: HIGH FIDELITY UNIFIED CALL OVERLAY */}
+      {activeCall && (
+        <UnifiedCallModal
+          activeCall={{
+            type: activeCall.type,
+            contactName: lang === 'ar' ? activeCall.profile.nameAr : activeCall.profile.name,
+            contactAvatar: activeCall.profile.avatar,
+            contactBadge: lang === 'ar' ? activeCall.profile.badgesAr?.[0] : activeCall.profile.badges?.[0],
+            status: activeCall.status === 'ended' ? 'ended' : activeCall.status === 'calling' ? 'calling' : 'connected',
+            quality: 'excellent'
+          }}
+          lang={lang}
+          onEndCall={handleEndCall}
+          playSynthSound={playSynthSound}
+        />
+      )}
 
       {/* MODAL 3: PRIVATE TEXT CHAT PANEL */}
       <AnimatePresence>

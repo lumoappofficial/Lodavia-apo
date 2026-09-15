@@ -30,7 +30,7 @@ import {
 import { VoiceRoomItem, VoiceUser } from '../types/voice';
 
 interface VoiceRoomActiveProps {
-  lang: 'ar' | 'en';
+  lang: string;
   playSynthSound: (freq: number, type: 'sine' | 'square' | 'sawtooth' | 'triangle', duration: number) => void;
   activeRoom: VoiceRoomItem;
   handleLeaveRoom: () => void;
@@ -367,22 +367,22 @@ export function VoiceRoomActive({
       <div className="lg:col-span-2 flex flex-col gap-6">
         
         {/* Active Stage Header Panel */}
-        <div className="glass-panel rounded-3xl p-6 bg-slate-950/45 border border-white/10 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-2xl" />
+        <div className="glass-panel rounded-3xl p-6 bg-white dark:bg-slate-950/45 border border-[#E2E8F0] dark:border-white/10 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 dark:bg-purple-500/5 rounded-full blur-2xl" />
           
           <div className="flex justify-between items-start gap-4 flex-wrap relative z-10">
             
             {/* Back to Hub Button */}
             <button
               onClick={handleLeaveRoom}
-              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-[#F4F7FA] dark:bg-white/5 hover:bg-sky-50 dark:hover:bg-white/10 text-[#475569] dark:text-slate-300 hover:text-[#111827] dark:hover:text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer border border-[#E2E8F0] dark:border-transparent"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>{lang === 'ar' ? 'الرجوع للقائمة' : 'Back to Hub'}</span>
             </button>
 
             {/* Room Timer widget */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-400 rounded-full font-mono text-[11px] font-bold animate-pulse">
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 rounded-full font-mono text-[11px] font-bold animate-pulse">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
               <span>{lang === 'ar' ? 'نشط:' : 'Elapsed:'}</span>
               <span>{roomElapsed}</span>
@@ -392,22 +392,22 @@ export function VoiceRoomActive({
           {/* Room Title */}
           <div className="mt-4 relative z-10">
             <div className="flex items-center gap-2">
-              <span className="text-[9px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-wider">
+              <span className="text-[9px] bg-sky-500 dark:bg-purple-600 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-wider">
                 {lang === 'ar' ? activeRoom.categoryAr : activeRoom.category}
               </span>
-              <span className="text-slate-500 text-xs font-bold">•</span>
-              <span className="text-slate-400 text-xs font-semibold">{lang === 'ar' ? activeRoom.communityNameAr : activeRoom.communityName}</span>
+              <span className="text-slate-400 dark:text-slate-500 text-xs font-bold">•</span>
+              <span className="text-[#475569] dark:text-slate-400 text-xs font-semibold">{lang === 'ar' ? activeRoom.communityNameAr : activeRoom.communityName}</span>
             </div>
 
-            <h1 className="text-base md:text-lg font-black text-white leading-relaxed mt-2 flex items-center gap-2 flex-wrap">
+            <h1 className="text-base md:text-lg font-black text-[#111827] dark:text-white leading-relaxed mt-2 flex items-center gap-2 flex-wrap">
               <span>{lang === 'ar' ? activeRoom.titleAr : activeRoom.title}</span>
               {activeRoom.isLocked ? (
-                <span className="text-[9px] bg-red-950/60 border border-red-500/30 text-red-400 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
+                <span className="text-[9px] bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
                   <Lock className="w-3 h-3" />
                   <span>LOCKED</span>
                 </span>
               ) : (
-                <span className="text-[9px] bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
+                <span className="text-[9px] bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
                   <Globe className="w-3 h-3" />
                   <span>PUBLIC STAGE</span>
                 </span>
@@ -568,8 +568,8 @@ export function VoiceRoomActive({
                 onClick={() => setSelectedUser(p)}
                 className={`p-4 rounded-3xl border transition-all duration-300 flex items-center gap-3 cursor-pointer group relative overflow-hidden ${
                   p.isSpeaking && !p.isMuted
-                    ? 'bg-gradient-to-br from-[#1c1810]/75 to-slate-950/75 border-yellow-500/40 shadow-[0_0_20px_rgba(234,179,8,0.15)] scale-[1.02]' 
-                    : 'bg-slate-950/40 border-white/5 hover:border-yellow-500/20'
+                    ? 'bg-amber-500/10 dark:bg-gradient-to-br dark:from-[#1c1810]/75 dark:to-slate-950/75 border-amber-500/50 dark:border-yellow-500/40 shadow-md scale-[1.02]' 
+                    : 'bg-white dark:bg-slate-950/40 border-[#E2E8F0] dark:border-white/5 hover:border-amber-400/40'
                 }`}
               >
                 {/* Speaking ripple ring behind avatar */}
@@ -591,17 +591,17 @@ export function VoiceRoomActive({
 
                 <div className="flex-1 overflow-hidden relative z-10">
                   <div className="flex items-center gap-1 justify-between">
-                    <span className="text-xs font-black text-white group-hover:text-yellow-400 transition-colors block truncate">{p.name}</span>
+                    <span className="text-xs font-black text-[#111827] dark:text-white group-hover:text-amber-600 dark:group-hover:text-yellow-400 transition-colors block truncate">{p.name}</span>
                     {p.isSpeaking && !p.isMuted && <SoundWaveBars />}
                   </div>
                   
                   {/* Stats or subtitle */}
                   <div className="flex items-center justify-between gap-1 mt-1">
-                    <span className="text-[9px] text-slate-400 block truncate">
+                    <span className="text-[9px] text-[#475569] dark:text-slate-400 block truncate">
                       {lang === 'ar' ? p.bioAr : p.bio}
                     </span>
                     {p.isMuted && (
-                      <span className="bg-red-500/20 text-red-400 p-0.5 rounded-full">
+                      <span className="bg-red-500/20 text-red-500 dark:text-red-400 p-0.5 rounded-full">
                         <MicOff className="w-3 h-3" />
                       </span>
                     )}
@@ -614,16 +614,16 @@ export function VoiceRoomActive({
 
         {/* TIER 2: SPEAKER SECTION */}
         <div className="flex flex-col gap-3 mt-4">
-          <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+          <h2 className="text-xs font-black text-[#64748B] dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 dark:bg-cyan-400" />
             <span>{lang === 'ar' ? 'المتحدثون على المسرح 🎙️' : 'Speakers on Stage 🎙️'}</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-400/10 text-cyan-400 font-bold font-mono">
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/10 dark:bg-cyan-400/10 text-sky-600 dark:text-cyan-400 font-bold font-mono">
               {speakerParticipants.length}
             </span>
           </h2>
 
           {speakerParticipants.length === 0 ? (
-            <div className="p-6 text-center text-slate-500 bg-white/2 rounded-2xl text-[10px] border border-white/5">
+            <div className="p-6 text-center text-[#64748B] dark:text-slate-500 bg-white dark:bg-white/2 rounded-2xl text-[10px] border border-[#E2E8F0] dark:border-white/5">
               {lang === 'ar' ? 'المسرح فارغ الآن. ارتقِ بمستمعين أو اطلب الحديث.' : 'No active speakers. Promote someone or unmute!'}
             </div>
           ) : (
@@ -634,31 +634,31 @@ export function VoiceRoomActive({
                   onClick={() => setSelectedUser(p)}
                   className={`p-3.5 rounded-2xl border transition-all duration-300 flex flex-col items-center text-center justify-center gap-2 cursor-pointer group relative overflow-hidden ${
                     p.isSpeaking && !p.isMuted
-                      ? 'bg-gradient-to-b from-cyan-950/20 to-slate-950/80 border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.15)] scale-[1.03]' 
-                      : 'bg-slate-950/40 border-white/5 hover:border-cyan-500/20'
+                      ? 'bg-sky-500/10 dark:bg-gradient-to-b dark:from-cyan-950/20 dark:to-slate-950/80 border-sky-400/50 dark:border-cyan-400/50 shadow-md scale-[1.03]' 
+                      : 'bg-white dark:bg-slate-950/40 border-[#E2E8F0] dark:border-white/5 hover:border-sky-400/30'
                   }`}
                 >
                   <div className="relative shrink-0">
                     {p.isSpeaking && !p.isMuted && (
-                      <div className="absolute inset-0 rounded-full bg-cyan-400 animate-pulse-ring opacity-60 scale-120" />
+                      <div className="absolute inset-0 rounded-full bg-sky-400 dark:bg-cyan-400 animate-pulse-ring opacity-60 scale-120" />
                     )}
-                    <img src={p.avatar} alt={p.name} className="w-11 h-11 rounded-full object-cover border border-white/20 relative z-10" />
+                    <img src={p.avatar} alt={p.name} className="w-11 h-11 rounded-full object-cover border border-[#CBD5E1] dark:border-white/20 relative z-10" />
                     
-                    <span className="absolute -bottom-1 -right-1 bg-cyan-500 text-slate-950 w-4.5 h-4.5 rounded-full border border-slate-950 text-[8px] flex items-center justify-center font-bold z-20">
+                    <span className="absolute -bottom-1 -right-1 bg-sky-500 dark:bg-cyan-500 text-white dark:text-slate-950 w-4.5 h-4.5 rounded-full border border-slate-950 text-[8px] flex items-center justify-center font-bold z-20">
                       🎙️
                     </span>
                   </div>
 
                   <div className="w-full relative z-10 overflow-hidden mt-1">
                     <div className="flex items-center justify-center gap-1 px-1">
-                      <span className="text-[11px] font-black text-white group-hover:text-cyan-400 transition-colors block truncate">{p.name}</span>
+                      <span className="text-[11px] font-black text-[#111827] dark:text-white group-hover:text-sky-600 dark:group-hover:text-cyan-400 transition-colors block truncate">{p.name}</span>
                       {p.isSpeaking && !p.isMuted && <SoundWaveBars />}
                     </div>
 
                     <div className="flex items-center justify-center gap-1.5 mt-1">
-                      <span className="text-[8px] bg-white/5 text-slate-400 px-1.5 py-0.2 rounded">Speaker</span>
+                      <span className="text-[8px] bg-[#F4F7FA] dark:bg-white/5 text-[#475569] dark:text-slate-400 px-1.5 py-0.2 rounded border border-[#E2E8F0] dark:border-transparent">Speaker</span>
                       {p.isMuted && (
-                        <span className="bg-red-500/20 text-red-400 p-0.5 rounded-full">
+                        <span className="bg-red-500/20 text-red-500 dark:text-red-400 p-0.5 rounded-full">
                           <MicOff className="w-2.5 h-2.5" />
                         </span>
                       )}
@@ -672,10 +672,10 @@ export function VoiceRoomActive({
 
         {/* TIER 3: AUDIENCE SECTION */}
         <div className="flex flex-col gap-3 mt-4">
-          <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+          <h2 className="text-xs font-black text-[#64748B] dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
             <span>{lang === 'ar' ? 'المستمعون في مدار المسرح 🎧' : 'Audience in Orbit 🎧'}</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/5 text-slate-400 font-bold font-mono">
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-white/5 text-[#475569] dark:text-slate-400 font-bold font-mono">
               {listenerParticipants.length}
             </span>
           </h2>
@@ -687,12 +687,12 @@ export function VoiceRoomActive({
                 <div 
                   key={p.id}
                   onClick={() => setSelectedUser(p)}
-                  className={`p-2.5 rounded-2xl border bg-slate-950/30 border-white/5 hover:border-slate-400/20 transition-all text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer relative group ${
-                    p.handRaised ? 'border-purple-500/30 bg-purple-950/10 shadow-[0_0_10px_rgba(168,85,247,0.1)]' : ''
+                  className={`p-2.5 rounded-2xl border bg-white dark:bg-slate-950/30 border-[#E2E8F0] dark:border-white/5 hover:border-slate-400/30 transition-all text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer relative group ${
+                    p.handRaised ? 'border-purple-400/50 bg-purple-50 dark:bg-purple-950/10 shadow-sm' : ''
                   }`}
                 >
                   <div className="relative">
-                    <img src={p.avatar} alt={p.name} className="w-8 h-8 rounded-full object-cover border border-white/10" />
+                    <img src={p.avatar} alt={p.name} className="w-8 h-8 rounded-full object-cover border border-[#E2E8F0] dark:border-white/10" />
                     
                     {p.handRaised && (
                       <span className="absolute -top-1 -right-1 bg-purple-600 text-white w-4 h-4 rounded-full border border-slate-950 text-[9px] flex items-center justify-center font-bold animate-bounce shadow-md">
@@ -701,11 +701,11 @@ export function VoiceRoomActive({
                     )}
                   </div>
 
-                  <span className="text-[10px] font-bold text-slate-300 block truncate w-full px-1 group-hover:text-white transition-colors">{p.name}</span>
+                  <span className="text-[10px] font-bold text-[#111827] dark:text-slate-300 block truncate w-full px-1 group-hover:text-purple-600 dark:group-hover:text-white transition-colors">{p.name}</span>
                   
                   {/* Promoted listener shortcuts for Host to click */}
                   {myIsHost && p.handRaised && (
-                    <span className="text-[7px] bg-purple-500/20 border border-purple-500/30 text-purple-300 px-1 py-0.2 rounded-full font-black animate-pulse mt-0.5">
+                    <span className="text-[7px] bg-purple-500/20 border border-purple-500/30 text-purple-600 dark:text-purple-300 px-1 py-0.2 rounded-full font-black animate-pulse mt-0.5">
                       TAP TO PROMOTE
                     </span>
                   )}
@@ -718,11 +718,11 @@ export function VoiceRoomActive({
         {/* ---------------------------------------------------- */}
         {/* INTERACTIVE COMPONENT: REACTIONS & POLLS ROW */}
         {/* ---------------------------------------------------- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-[#E2E8F0] dark:border-white/5">
           
           {/* Reaction Spawner Panel */}
-          <div className="glass-panel p-4 rounded-2xl border border-white/5 bg-[#0a0a14]/60 flex flex-col gap-2">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
+          <div className="glass-panel p-4 rounded-2xl border border-[#E2E8F0] dark:border-white/5 bg-white dark:bg-[#0a0a14]/60 flex flex-col gap-2">
+            <span className="text-[10px] font-black text-[#64748B] dark:text-slate-500 uppercase tracking-widest block">
               {lang === 'ar' ? 'انشر تفاعلات حية للمسرح 🎉' : 'Live Audience Emoji Reactions 🎉'}
             </span>
             <div className="grid grid-cols-6 gap-2 mt-1">
@@ -730,7 +730,7 @@ export function VoiceRoomActive({
                 <button
                   key={emoji}
                   onClick={() => handleSpawnReaction(emoji)}
-                  className="py-2.5 rounded-xl bg-white/5 border border-white/5 hover:border-cyan-500/30 hover:scale-110 active:scale-95 text-xl cursor-pointer transition-all flex items-center justify-center"
+                  className="py-2.5 rounded-xl bg-[#F4F7FA] dark:bg-white/5 border border-[#E2E8F0] dark:border-white/5 hover:border-sky-400/40 hover:scale-110 active:scale-95 text-xl cursor-pointer transition-all flex items-center justify-center"
                 >
                   {emoji}
                 </button>
@@ -739,12 +739,12 @@ export function VoiceRoomActive({
           </div>
 
           {/* Dynamic Audience Poll Card */}
-          <div className="glass-panel p-4 rounded-2xl border border-white/5 bg-[#0a0a14]/60 flex flex-col gap-2 justify-between">
+          <div className="glass-panel p-4 rounded-2xl border border-[#E2E8F0] dark:border-white/5 bg-white dark:bg-[#0a0a14]/60 flex flex-col gap-2 justify-between">
             <div>
-              <span className="text-[9px] bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-2 py-0.5 rounded font-black tracking-widest uppercase">
+              <span className="text-[9px] bg-sky-500/10 border border-sky-500/30 text-sky-600 dark:text-cyan-400 px-2 py-0.5 rounded font-black tracking-widest uppercase">
                 POLL OF THE ORBIT
               </span>
-              <h4 className="text-[11px] font-black text-white mt-1.5 leading-snug">
+              <h4 className="text-[11px] font-black text-[#111827] dark:text-white mt-1.5 leading-snug">
                 {lang === 'ar' ? 'هل تعتقد أن بنية الـ Static Bundlers ستختفي؟' : 'Should full stack apps bypass standard Node ESM checks?'}
               </h4>
             </div>
@@ -765,20 +765,20 @@ export function VoiceRoomActive({
                     onClick={() => handleVotePoll(opt.id)}
                     className={`w-full p-2.5 rounded-xl border text-start relative overflow-hidden transition-all text-xs flex justify-between items-center ${
                       isSelected 
-                        ? 'border-cyan-500 bg-cyan-950/20 text-cyan-200 font-extrabold' 
-                        : 'border-white/5 bg-white/5 hover:bg-white/10 text-slate-300'
+                        ? 'border-sky-500 bg-sky-50 dark:bg-cyan-950/20 text-sky-700 dark:text-cyan-200 font-extrabold' 
+                        : 'border-[#E2E8F0] dark:border-white/5 bg-[#F4F7FA] dark:bg-white/5 hover:bg-sky-50/50 text-[#111827] dark:text-slate-300'
                     }`}
                   >
                     {/* Visual Vote Progress Bar */}
                     <div 
                       className={`absolute inset-y-0 left-0 transition-all duration-1000 ${
-                        isSelected ? 'bg-cyan-500/10' : 'bg-white/5'
+                        isSelected ? 'bg-sky-500/10' : 'bg-[#E2E8F0]/50 dark:bg-white/5'
                       }`}
                       style={{ width: `${percentage}%` }}
                     />
                     
                     <span className="relative z-10 truncate max-w-[80%]">{opt.text}</span>
-                    <span className="relative z-10 text-[10px] font-mono font-bold text-slate-500">
+                    <span className="relative z-10 text-[10px] font-mono font-bold text-[#64748B] dark:text-slate-500">
                       {pollVoted ? `${percentage}%` : ''}
                     </span>
                   </button>
@@ -796,38 +796,38 @@ export function VoiceRoomActive({
       {/* ---------------------------------------------------- */}
       <div className="lg:col-span-1 flex flex-col gap-6" id="active-room-ai-sidebar">
         
-        <div className="glass-panel rounded-3xl p-5 border border-purple-500/20 bg-gradient-to-b from-[#0a0614]/80 to-[#030307]/90 flex flex-col gap-4 shadow-2xl relative">
+        <div className="glass-panel rounded-3xl p-5 border border-purple-200 dark:border-purple-500/20 bg-white dark:bg-gradient-to-b dark:from-[#0a0614]/80 dark:to-[#030307]/90 flex flex-col gap-4 shadow-xl relative">
           
-          <div className="flex items-center justify-between border-b border-white/5 pb-2">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-white/5 pb-2">
             <div className="flex items-center gap-1.5">
-              <Brain className="w-4 h-4 text-purple-400 animate-pulse" />
-              <h3 className="text-xs font-black text-white uppercase tracking-wider">
+              <Brain className="w-4 h-4 text-purple-600 dark:text-purple-400 animate-pulse" />
+              <h3 className="text-xs font-black text-[#111827] dark:text-white uppercase tracking-wider">
                 {lang === 'ar' ? 'المساعد الصوتي الذكي Lodavia AI 🪐' : 'Lodavia AI Stage Companion 🪐'}
               </h3>
             </div>
             
-            <span className="text-[8px] bg-purple-500/15 border border-purple-500/40 text-purple-300 px-1.5 py-0.2 rounded font-black font-mono animate-pulse">
+            <span className="text-[8px] bg-purple-50 dark:bg-purple-500/15 border border-purple-200 dark:border-purple-500/40 text-purple-600 dark:text-purple-300 px-1.5 py-0.2 rounded font-black font-mono animate-pulse">
               TELEMETRY: ON
             </span>
           </div>
 
           {/* AI Transcriptions sub-card */}
           <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center text-[10px] text-slate-500 uppercase tracking-widest font-black">
+            <div className="flex justify-between items-center text-[10px] text-[#64748B] dark:text-slate-500 uppercase tracking-widest font-black">
               <span>🎙️ Live Transcription feed</span>
               <button
                 onClick={() => setLangTranslation(prev => prev === 'original' ? 'arabic' : 'original')}
-                className="px-2 py-0.5 rounded bg-purple-950/40 hover:bg-purple-900 border border-purple-500/30 text-[9px] text-purple-300 font-bold transition-all cursor-pointer"
+                className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950/40 hover:bg-purple-200 border border-purple-300 dark:border-purple-500/30 text-[9px] text-purple-700 dark:text-purple-300 font-bold transition-all cursor-pointer"
               >
                 {langTranslation === 'original' ? 'TRANSLATE AR' : 'SHOW ORIGINAL'}
               </button>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-black/50 border border-white/5 h-64 overflow-y-auto flex flex-col gap-3 scrollbar-thin">
+            <div className="p-3.5 rounded-2xl bg-[#F4F7FA] dark:bg-black/50 border border-[#E2E8F0] dark:border-white/5 h-64 overflow-y-auto flex flex-col gap-3 scrollbar-thin">
               {transcript.map((line, i) => (
                 <div key={i} className="flex flex-col gap-0.5 text-xs">
-                  <span className="text-[10px] font-black text-cyan-400">{line.speaker}</span>
-                  <p className="text-slate-300 leading-relaxed font-medium">
+                  <span className="text-[10px] font-black text-sky-600 dark:text-cyan-400">{line.speaker}</span>
+                  <p className="text-[#111827] dark:text-slate-300 leading-relaxed font-medium">
                     {langTranslation === 'arabic' ? line.textAr : line.text}
                   </p>
                 </div>
@@ -837,14 +837,14 @@ export function VoiceRoomActive({
 
           {/* AI Live Key Takeaways bullet points */}
           <div className="flex flex-col gap-2">
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-black flex items-center gap-1">
-              <FileText className="w-3.5 h-3.5 text-purple-400" />
+            <span className="text-[10px] text-[#64748B] dark:text-slate-500 uppercase tracking-widest font-black flex items-center gap-1">
+              <FileText className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               <span>AI Real-time Decisions & Summaries</span>
             </span>
 
-            <ul className="flex flex-col gap-1.5 p-3 rounded-2xl bg-purple-950/10 border border-purple-500/10 text-[11px] text-slate-300 list-disc list-inside leading-relaxed font-semibold">
+            <ul className="flex flex-col gap-1.5 p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/10 border border-purple-200 dark:border-purple-500/10 text-[11px] text-[#111827] dark:text-slate-300 list-disc list-inside leading-relaxed font-semibold">
               {aiSummary.map((bullet, i) => (
-                <li key={i} className="text-slate-300">
+                <li key={i} className="text-[#111827] dark:text-slate-300">
                   {bullet}
                 </li>
               ))}
@@ -852,18 +852,18 @@ export function VoiceRoomActive({
           </div>
 
           {/* AI Q&A Text Form widget */}
-          <form onSubmit={handleAskAI} className="flex flex-col gap-2 pt-2 border-t border-white/5">
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-black">
+          <form onSubmit={handleAskAI} className="flex flex-col gap-2 pt-2 border-t border-[#E2E8F0] dark:border-white/5">
+            <span className="text-[10px] text-[#64748B] dark:text-slate-500 uppercase tracking-widest font-black">
               {lang === 'ar' ? 'اسأل الذكاء الاصطناعي عن الجلسة الحالية' : 'Ask AI anything about ongoing debate'}
             </span>
 
-            <div className="flex items-center bg-black/40 border border-white/10 rounded-2xl px-3 py-2">
+            <div className="flex items-center bg-white dark:bg-black/40 border border-[#CBD5E1] dark:border-white/10 rounded-2xl px-3 py-2">
               <input 
                 type="text"
                 value={aiInput}
                 onChange={(e) => setAiInput(e.target.value)}
                 placeholder={lang === 'ar' ? 'مثال: ما رأي سارة بالـ Cold starts؟' : 'Ask Comet AI: e.g. What is the consensus?'}
-                className="bg-transparent border-none text-[11px] text-white focus:outline-none focus:ring-0 w-full px-2 placeholder:text-slate-500"
+                className="bg-transparent border-none text-[11px] text-[#111827] dark:text-white focus:outline-none focus:ring-0 w-full px-2 placeholder:text-[#64748B] dark:placeholder:text-slate-500"
               />
               <button 
                 type="submit"
@@ -874,9 +874,9 @@ export function VoiceRoomActive({
             </div>
 
             {aiAnswers.length > 0 && (
-              <div className="mt-2 flex flex-col gap-2 bg-black/20 p-2.5 rounded-xl max-h-32 overflow-y-auto border border-white/5 text-[10px]">
+              <div className="mt-2 flex flex-col gap-2 bg-[#F4F7FA] dark:bg-black/20 p-2.5 rounded-xl max-h-32 overflow-y-auto border border-[#E2E8F0] dark:border-white/5 text-[10px]">
                 {aiAnswers.map((ans, i) => (
-                  <div key={i} className="text-slate-400 whitespace-pre-line border-b border-white/5 pb-1.5 last:border-b-0 last:pb-0">
+                  <div key={i} className="text-[#475569] dark:text-slate-400 whitespace-pre-line border-b border-[#E2E8F0] dark:border-white/5 pb-1.5 last:border-b-0 last:pb-0">
                     {ans}
                   </div>
                 ))}

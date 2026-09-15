@@ -31,7 +31,7 @@ import { AppUser } from '../types';
 interface AIReplyAssistantProps {
   currentUser: AppUser;
   setCurrentUser: React.Dispatch<React.SetStateAction<AppUser>>;
-  lang: 'ar' | 'en';
+  lang: string;
   playSynthSound: (freq: number, type: 'sine' | 'square' | 'sawtooth' | 'triangle', duration: number) => void;
 }
 
@@ -436,25 +436,25 @@ export default function AIReplyAssistant({
   };
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto flex flex-col gap-6 text-slate-100">
+    <div className="relative w-full max-w-7xl mx-auto flex flex-col gap-6 text-[#111827] dark:text-slate-100">
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 glass-panel border border-cyan-500/30 px-5 py-3 rounded-full text-xs font-bold text-cyan-300 shadow-2xl flex items-center gap-2 animate-[fadeIn_0.3s_ease-out]">
-          <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 glass-panel border border-sky-400/50 dark:border-cyan-500/30 px-5 py-3 rounded-full text-xs font-bold text-sky-700 dark:text-cyan-300 shadow-2xl flex items-center gap-2 animate-[fadeIn_0.3s_ease-out]">
+          <Sparkles className="w-4 h-4 text-sky-500 dark:text-cyan-400 animate-pulse" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* HEADER CARD */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c0c14] via-slate-900/60 to-purple-950/20 border border-white/10 p-6 md:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-20 w-60 h-60 bg-cyan-600/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-gradient-to-br dark:from-[#0c0c14] dark:via-slate-900/60 dark:to-purple-950/20 border border-[#E2E8F0] dark:border-white/10 p-6 md:p-8 shadow-xl">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/10 dark:bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-20 w-60 h-60 bg-sky-600/5 dark:bg-cyan-600/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] bg-cyan-500/15 text-cyan-400 px-3 py-1 rounded-full font-black uppercase tracking-widest flex items-center gap-1.5 border border-cyan-500/20">
+              <span className="text-[10px] bg-sky-500/15 text-sky-600 dark:text-cyan-400 px-3 py-1 rounded-full font-black uppercase tracking-widest flex items-center gap-1.5 border border-sky-500/20 dark:border-cyan-500/20">
                 <Cpu className="w-3.5 h-3.5 animate-spin-slow" />
                 <span>PREMIUM SUITE</span>
               </span>
@@ -464,16 +464,16 @@ export default function AIReplyAssistant({
                   👑 PRO ACTIVE
                 </span>
               ) : (
-                <span className="text-[10px] bg-slate-500/20 text-slate-400 px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+                <span className="text-[10px] bg-slate-200 dark:bg-slate-500/20 text-[#475569] dark:text-slate-400 px-3 py-1 rounded-full font-bold uppercase tracking-wider">
                   FREE PLAN
                 </span>
               )}
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-3 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-[#111827] dark:text-white mt-3 tracking-tight">
               {lang === 'ar' ? 'مساعد لودافيا للرد الذكي بالذكاء الاصطناعي 🚀' : 'Lodavia AI Reply Assistant 🚀'}
             </h1>
-            <p className="text-slate-400 text-xs md:text-sm mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-[#475569] dark:text-slate-400 text-xs md:text-sm mt-1.5 max-w-2xl leading-relaxed">
               {lang === 'ar' 
                 ? 'حوّل منصة Lodavia إلى عصب تحكم مركزي ذكي لإدارة جميع تعليقات قنوات التواصل الاجتماعي وتوليد ردود شخصية بلمحة بصر وبمختلف اللهجات العربية.' 
                 : 'Turn Lodavia into a cosmic operations center to import social comments, run neural analysis, and synthesize perfectly tailored, unique replies with lightning speed.'}
@@ -494,14 +494,14 @@ export default function AIReplyAssistant({
 
             {/* Daily Usage indicator */}
             <div className="text-center md:text-end">
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-[#475569] dark:text-slate-400">
                 {lang === 'ar' ? 'معدل الاستخدام اليومي:' : 'AI Generation Usage Today:'}{' '}
-                <strong className={isPro ? 'text-cyan-400' : 'text-purple-400'}>
+                <strong className={isPro ? 'text-sky-600 dark:text-cyan-400' : 'text-purple-600 dark:text-purple-400'}>
                   {isPro ? '∞' : `${usageToday}/20`}
                 </strong>
               </span>
               {!isPro && (
-                <div className="w-full md:w-48 h-1.5 bg-white/5 rounded-full mt-1 overflow-hidden border border-white/5">
+                <div className="w-full md:w-48 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full mt-1 overflow-hidden border border-[#E2E8F0] dark:border-white/5">
                   <div 
                     className="h-full bg-purple-500 transition-all duration-500" 
                     style={{ width: `${Math.min(100, (usageToday / 20) * 100)}%` }} 
@@ -513,7 +513,7 @@ export default function AIReplyAssistant({
         </div>
 
         {/* INNER PAGE NAVIGATION */}
-        <div className="flex border-t border-white/5 mt-6 pt-4 gap-1.5">
+        <div className="flex border-t border-[#E2E8F0] dark:border-white/5 mt-6 pt-4 gap-1.5 overflow-x-auto no-scrollbar">
           {[
             { id: 'inbox', labelAr: '📥 صندوق الوارد الكوني', labelEn: '📥 Cosmic Comment Inbox' },
             { id: 'integrations', labelAr: '🔌 بوابة الدمج الاجتماعي', labelEn: '🔌 Platform Integrations' },
@@ -527,8 +527,8 @@ export default function AIReplyAssistant({
               }}
               className={`px-4 py-2 rounded-xl text-[10px] md:text-xs font-black transition-all cursor-pointer border ${
                 activeTab === tab.id
-                  ? 'bg-white/10 border-white/10 text-white shadow-md'
-                  : 'bg-white/5 border-transparent text-slate-400 hover:text-white hover:bg-white/10'
+                  ? 'bg-sky-500 text-white border-sky-400 shadow-sm'
+                  : 'bg-[#F4F7FA] dark:bg-white/5 border-[#E2E8F0] dark:border-transparent text-[#475569] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white'
               }`}
             >
               {lang === 'ar' ? tab.labelAr : tab.labelEn}

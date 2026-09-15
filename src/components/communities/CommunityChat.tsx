@@ -20,7 +20,7 @@ import { AppUser, CommunityItem, ChatMessage } from "../../types";
 
 interface CommunityChatProps {
   currentUser: AppUser;
-  lang: "ar" | "en";
+  lang: string;
   activeCommunity: CommunityItem;
   playSynthSound: (frequency: number, type?: 'sine' | 'triangle' | 'sawtooth' | 'square', duration?: number) => void;
 }

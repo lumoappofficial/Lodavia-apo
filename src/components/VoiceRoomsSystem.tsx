@@ -19,7 +19,7 @@ import { VoiceRoomActive } from './VoiceRoomActive';
 interface VoiceRoomsSystemProps {
   currentUser: any;
   setCurrentUser: React.Dispatch<React.SetStateAction<any>>;
-  lang: 'ar' | 'en';
+  lang: string;
   playSynthSound: (freq: number, type: 'sine' | 'square' | 'sawtooth' | 'triangle', duration: number) => void;
   setActiveTab: (tab: any) => void;
 }

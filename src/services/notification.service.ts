@@ -36,11 +36,6 @@ export const notificationService = {
         return snap.docs.map(d => ({ id: d.id, ...d.data() })) as NotificationItem[];
       } catch (err) {
         console.warn("Firestore notification fetch error, falling back:", err);
-        try {
-          handleFirestoreError(err, OperationType.LIST, collPath);
-        } catch (wrappedErr) {
-          console.error("Firestore Error Wrapped:", wrappedErr);
-        }
         return storage.load<NotificationItem[]>('lodavia_notifications', []);
       }
     } else {

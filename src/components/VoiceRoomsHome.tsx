@@ -19,7 +19,7 @@ import {
 import { VoiceRoomItem, ScheduledRoom } from '../types/voice';
 
 interface VoiceRoomsHomeProps {
-  lang: 'ar' | 'en';
+  lang: string;
   playSynthSound: (freq: number, type: 'sine' | 'square' | 'sawtooth' | 'triangle', duration: number) => void;
   rooms: VoiceRoomItem[];
   scheduledRooms: ScheduledRoom[];
@@ -322,7 +322,7 @@ export function VoiceRoomsHome({
               {lang === 'ar' ? 'لا توجد صالونات صوتية تطابق بحثك حالياً.' : 'No active spaces match your parameters.'}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredRooms.map((room) => {
                 const isTrending = room.isTrending || room.listenersCount > 200;
                 return (

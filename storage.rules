@@ -1,0 +1,88 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isSafeImage() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|gif)');
+    }
+
+    function isSafeAudio() {
+      return request.resource.contentType.matches('audio/(mpeg|mp3|wav|ogg|aac|m4a|webm)');
+    }
+
+    function isSafeVideo() {
+      return request.resource.contentType.matches('video/(mp4|webm|quicktime|ogg)');
+    }
+
+    function isSafeMedia() {
+      return isSafeImage() || isSafeAudio() || isSafeVideo();
+    }
+
+    function isValidSize(maxMb) {
+      return request.resource.size <= maxMb * 1024 * 1024;
+    }
+
+    // ===============================================================
+    // 1. User Profile Media (Avatars, Cover Images)
+    // users/{userId}/{fileName}
+    // ===============================================================
+    match /users/{userId}/{fileName} {
+      // Authenticated users can view profile pictures and banners
+      allow read: if isSignedIn();
+      // Only the account owner can upload their own profile/cover images (max 10MB)
+      allow write: if isOwner(userId) && isSafeImage() && isValidSize(10);
+      allow delete: if isOwner(userId);
+    }
+
+    // ===============================================================
+    // 2. Post Media & Attachments
+    // posts/{userId}/{fileName}
+    // ===============================================================
+    match /posts/{userId}/{fileName} {
+      allow read: if isSignedIn();
+      // Only the author can upload images or videos for their posts (max 50MB)
+      allow write: if isOwner(userId) && isSafeMedia() && isValidSize(50);
+      allow delete: if isOwner(userId);
+    }
+
+    // ===============================================================
+    // 3. Direct / Community Chat Attachments & Voice Notes
+    // chats/{chatId}/{userId}/{fileName}
+    // ===============================================================
+    match /chats/{chatId}/{userId}/{fileName} {
+      allow read: if isSignedIn();
+      // Only the message sender can upload to their subfolder in the chat (max 25MB)
+      allow write: if isOwner(userId) && (isSafeMedia() || request.resource.contentType == 'application/pdf') && isValidSize(25);
+      allow delete: if isOwner(userId);
+    }
+
+    // ===============================================================
+    // 4. Story Media
+    // stories/{userId}/{fileName}
+    // ===============================================================
+    match /stories/{userId}/{fileName} {
+      allow read: if isSignedIn();
+      // Only the story creator can upload images/videos (max 30MB)
+      allow write: if isOwner(userId) && (isSafeImage() || isSafeVideo()) && isValidSize(30);
+      allow delete: if isOwner(userId);
+    }
+
+    // ===============================================================
+    // 5. Default Deny for all other unmapped paths
+    // ===============================================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -3,26 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Lodavia | المجرة التفاعلية</title>
+    <title>Lodavia</title>
+    <meta name="description" content="منصة Lodavia للتواصل، التعلم، والمجتمعات التفاعلية في عالم واحد متصل" />
+    <meta property="og:title" content="Lodavia" />
+    <meta property="og:description" content="منصة Lodavia للتواصل، التعلم، والمجتمعات التفاعلية في عالم واحد متصل" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0a0a0f" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=192&auto=format&fit=crop&q=80" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/lodavia-icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/lodavia-icon-512.png" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
-            .catch((err) => console.log('Service Worker registration failed:', err));
-        });
-      }
-    </script>
   </body>
 </html>
 

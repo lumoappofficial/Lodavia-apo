@@ -22,6 +22,7 @@ export const initialUser: AppUser = {
   country: 'المملكة العربية السعودية',
   language: 'العربية',
   interests: ['برمجة', 'ذكاء اصطناعي', 'ألعاب'],
+  hobbies: ['القراءة 📚', 'التصوير الفوتوغرافي 📸', 'العزف الموسيقي 🎸', 'ألعاب الفيديو 🎮', 'السفر والترحال ✈️', 'السباحة 🏊‍♂️'],
   achievements: [
     { id: 'ach_1', title: 'عضو مؤسس', description: 'انضم إلى Lodavia في ساعاتها الأولى', icon: '👑' },
     { id: 'ach_2', title: 'مستكشف المعرفة', description: 'أكمل أول دورة تعليمية بنجاح', icon: '🎓' },
@@ -31,8 +32,28 @@ export const initialUser: AppUser = {
   enrolledCourses: ['course_react', 'course_prompt'],
   followersCount: 1420,
   followingCount: 382,
-  points: 150,
-  purchasedItems: []
+  points: 1500,
+  shards: 250,
+  inventory: ['frame_starter_neon', 'bg_starter_void', 'badge_starter_cadet', 'name_starter_cyan'],
+  equippedCosmetics: {
+    frame: 'frame_starter_neon',
+    background: 'bg_starter_void',
+    badge: 'badge_starter_cadet'
+  },
+  favoriteCosmetics: [],
+  newCosmetics: [],
+  lastDailyRewardClaim: null,
+  purchasedItems: [],
+  journeyStats: { learning: 2, helping: 3, creating: 1, gaming: 0, community: 2 },
+  subscription: {
+    tier: 'free',
+    status: 'active',
+    startDate: new Date().toISOString(),
+    currentPeriodEnd: new Date(Date.now() + 30 * 86400000).toISOString(),
+    dailyRequestsUsed: 2,
+    dailyLimit: 10,
+    lastResetDate: new Date().toISOString().split('T')[0]
+  }
 };
 
 // All Available Communities
@@ -364,49 +385,94 @@ export const allCommunities: CommunityItem[] = [
   }
 ];
 
-// Seeded active conversations for modern chat section
+// Seeded active conversations for modern social chat section
 export const initialChats: ChatConversation[] = [
   {
     id: 'chat_1',
     contactName: 'سارة المهندس',
-    contactAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+    contactAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
     isOnline: true,
     unreadCount: 2,
+    isPinned: true,
+    isVerified: true,
+    lastSeen: 'نشط الآن',
+    category: 'direct',
+    badge: 'كبير مطوري الواجهات',
     messages: [
-      { id: 'm1', senderId: 'sarah', text: 'مرحباً محمد! هل شاهدت ميزات React 19 الجديدة؟', type: 'text', timestamp: '10:15 AM' },
-      { id: 'm2', senderId: 'sarah', text: 'أنصحك بمشاهدة الكود البرمجي الذي أضفته، فيه حلول ممتازة جداً لمشاكل الـ State', type: 'text', timestamp: '10:16 AM' }
+      { id: 'm1', senderId: 'sarah', text: 'مرحباً محمد! هل اطلعت على تحديثات React 19 والواجهات الجديدة؟', type: 'text', timestamp: '10:15 ص', status: 'read' },
+      { id: 'm2', senderId: 'sarah', text: 'أنصحك بمشاهدة الكود البرمجي الذي أضفته، فيه حلول ممتازة جداً لمشاكل الـ State 🚀', type: 'text', timestamp: '10:16 ص', status: 'read' }
+    ]
+  },
+  {
+    id: 'chat_group_1',
+    contactName: 'فريق لودافيا للابتكار 🚀',
+    contactAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+    isOnline: true,
+    unreadCount: 5,
+    isPinned: true,
+    isVerified: true,
+    category: 'group',
+    lastSeen: '12 عضواً متصلاً',
+    badge: 'مجموعة رسمية',
+    messages: [
+      { id: 'mg1', senderId: 'yousef', text: 'تم إطلاق النسخة التجريبية الجديدة على الخوادم الكونية بنجاح!', type: 'text', timestamp: '09:40 ص', status: 'read' },
+      { id: 'mg2', senderId: 'sarah', text: 'رائع جداً، الأداء فائق السرعة وتجربة المستخدم انسيابية 🌟', type: 'text', timestamp: '09:42 ص', status: 'read' }
     ]
   },
   {
     id: 'chat_2',
     contactName: 'د. يوسف الرشيد',
-    contactAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+    contactAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80',
     isOnline: true,
     unreadCount: 0,
+    isPinned: true,
+    isVerified: true,
+    category: 'direct',
+    lastSeen: 'نشط الآن',
+    badge: 'باحث ذكاء اصطناعي',
     messages: [
-      { id: 'm3', senderId: 'me', text: 'السلام عليكم دكتور، هل هناك ندوة جديدة هذا الأسبوع بخصوص الذكاء الاصطناعي؟', type: 'text', timestamp: 'أمس' },
-      { id: 'm4', senderId: 'yousef', text: 'وعليكم السلام يا محمد. نعم، سنقوم بفتح صالون صوتي الليلة لمناقشة أحدث التحديثات بإذن الله، يسعدنا حضورك.', type: 'text', timestamp: 'أمس' }
+      { id: 'm3', senderId: 'me', text: 'السلام عليكم دكتور، هل هناك ندوة جديدة هذا الأسبوع بخصوص الذكاء الاصطناعي؟', type: 'text', timestamp: 'أمس', status: 'read' },
+      { id: 'm4', senderId: 'yousef', text: 'وعليكم السلام يا محمد. نعم، سنقوم بفتح صالون صوتي الليلة لمناقشة أحدث التحديثات بإذن الله، يسعدنا حضورك 🎙️', type: 'text', timestamp: 'أمس', status: 'read' }
     ]
   },
   {
     id: 'chat_3',
     contactName: 'فيصل الغامدي',
-    contactAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
+    contactAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80',
     isOnline: false,
     unreadCount: 0,
+    isPinned: false,
+    category: 'direct',
+    lastSeen: 'منذ ساعتين',
     messages: [
-      { id: 'm5', senderId: 'faisal', text: 'لقد أرسلت لك ملف المشروع كاملاً هنا للاطلاع والتجربة.', type: 'file', fileName: 'lumo_app_v1.zip', timestamp: 'قبل يومين' },
-      { id: 'm6', senderId: 'me', text: 'رائع جداً فيصل، سأقوم بتحميله وتجربته فور العودة للمنزل، شكراً لجهودك ومشاركتك.', type: 'text', timestamp: 'قبل يومين' }
+      { id: 'm5', senderId: 'faisal', text: 'لقد أرسلت لك ملف المشروع كاملاً هنا للاطلاع والتجربة.', type: 'file', fileName: 'lodavia_v2_core.zip', fileSize: '18.4 MB', timestamp: 'قبل يومين', status: 'read' },
+      { id: 'm6', senderId: 'me', text: 'رائع جداً فيصل، سأقوم بتحميله وتجربته فور العودة للمنزل، شكراً لجهودك ومشاركتك.', type: 'text', timestamp: 'قبل يومين', status: 'read' }
     ]
   },
   {
     id: 'chat_4',
     contactName: 'طارق الملحن',
-    contactAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80',
+    contactAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&auto=format&fit=crop&q=80',
     isOnline: true,
     unreadCount: 0,
+    isPinned: false,
+    category: 'direct',
+    lastSeen: 'نشط الآن',
     messages: [
-      { id: 'm7', senderId: 'tareq', text: 'اسمع هذا العزف البسيط على مقام الصبا وأعطني رأيك يا صديقي دقيقة صوتية واحدة 🎵', type: 'audio', duration: '0:45', timestamp: 'الجمعة' }
+      { id: 'm7', senderId: 'tareq', text: 'اسمع هذا العزف البسيط على مقام الصبا وأعطني رأيك يا صديقي دقيقة صوتية واحدة 🎵', type: 'audio', duration: '0:45', timestamp: 'الجمعة', status: 'read' }
+    ]
+  },
+  {
+    id: 'chat_5',
+    contactName: 'نورة العتيبي',
+    contactAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+    isOnline: false,
+    unreadCount: 1,
+    isPinned: false,
+    category: 'direct',
+    lastSeen: 'أمس في 11:30 م',
+    messages: [
+      { id: 'm8', senderId: 'noura', text: 'شاركت معك تصميم الألوان والخطوط الكونية الجديد، تفقد المعاينة 🎨', type: 'text', timestamp: 'الأربعاء', status: 'delivered' }
     ]
   }
 ];

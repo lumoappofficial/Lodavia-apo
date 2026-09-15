@@ -3,60 +3,156 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
   theme: {
+    screens: {
+      'sm': '640px',
+      'md': '768px',   // Tablet: 768px – 1023px
+      'lg': '1024px',  // Desktop: 1024px+
+      'xl': '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       fontFamily: {
-        sans: ['Space Grotesk', 'Cairo', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Cairo', 'Inter', 'Space Grotesk', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['Fira Code', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
-        // --- Brand core (unchanged, kept for backward compatibility) ---
-        'cosmic-blue': '#071A3D',
-        'aurora-cyan': '#27D3FF',
-        'sunrise-orange': '#FF9E45',
-        'warm-gold': '#FFD76A',
+        primary: {
+          DEFAULT: '#0EA5E9',
+          hover: '#0284C7',
+          dark: '#38BDF8',
+        },
+        secondary: {
+          DEFAULT: '#1D4ED8',
+          hover: '#1E40AF',
+        },
+        accent: {
+          DEFAULT: '#2563EB',
+          gold: '#D9B968',
+        },
+        gold: {
+          DEFAULT: '#D9B968',
+          hover: '#C9A24B',
+          light: '#FDE68A',
+        },
+        // Core branding colors
+        'warm-bg': '#F8FAFC',
+        surface: '#FFFFFF',
+        'border-gray': '#E2E8F0',
+        'text-main': '#0F172A',
+        'text-sub': '#475569',
+        'text-mute': '#64748B',
+        'cosmic-blue': '#0EA5E9',
+        'electric-blue': '#1D4ED8',
+        'aurora-cyan': '#06B6D4',
+        'warm-gold': '#D9B968',
         'pure-white': '#FFFFFF',
 
-        // --- Void scale: tinted near-blacks (navy/violet tint, never neutral gray) ---
-        // Use these INSTEAD of slate-950 / bg-[#0a0a0f] / bg-[#07070a] etc.
-        'void-950': '#080A16',
-        'void-900': '#0D1026',
-        'void-800': '#141936',
-        'void-700': '#1C2247',
-        'void-600': '#2A3160',
+        // Linear & Vercel-grade Dark Mode Elevation System
+        'dark-bg': '#070B14',          // Level 0: Deepest canvas background
+        'dark-surface-1': '#0D1527',   // Level 1: Primary cards & base panels
+        'dark-surface-2': '#131F37',   // Level 2: Nested cards, popovers, modals
+        'dark-surface-3': '#1A2B4C',   // Level 3: Active states & interactive hover surfaces
 
-        // --- Nova: primary vivid accent (electric violet) ---
-        'nova-400': '#B084FF',
-        'nova-500': '#9350FF',
-        'nova-600': '#7C2CF0',
+        // Elevation aliases
+        elevation: {
+          0: '#070B14',
+          1: '#0D1527',
+          2: '#131F37',
+          3: '#1A2B4C',
+        },
 
-        // --- Aurora: secondary accent (electric cyan) ---
-        'aurora-400': '#5CE6FF',
-        'aurora-500': '#27D3FF',
-        'aurora-600': '#00AEEA',
+        // Backward-compatible core aliases mapped to new refined elevations
+        'lodavia-navy': '#070B14',     // Deep canvas background (was #0B1220)
+        'lodavia-surface': '#0D1527',  // Level 1 base surface (was #0E172A)
+        'lodavia-elevated': '#131F37', // Level 2 modal surface (was #152238)
+        'lodavia-active': '#1A2B4C',   // Level 3 active/hover surface
+        'lodavia-muted': '#64748B',
+        'lodavia-card': '#FFFFFF',
 
-        // --- Comet: tertiary accent (hot pink, sparingly for live/highlights) ---
-        'comet-400': '#FF66B8',
-        'comet-500': '#FF3D9A',
-        'comet-600': '#E8177A',
+        // Refined Dark Mode Text Contrast Tokens (WCAG AA & AAA compliant)
+        'dark-text': {
+          primary: '#F8FAFC',          // 98% brightness crisp primary text
+          secondary: '#94A3B8',        // Refined legible secondary text (replaces dim grays)
+          muted: '#64748B',            // Subdued metadata & timestamps
+        },
 
-        // --- Ember: warm CTA accent (matches existing brand) ---
-        'ember-400': '#FFB25E',
-        'ember-500': '#FF9E45',
-        'ember-600': '#FFD76A',
-      },
-      backgroundImage: {
-        'gradient-nova': 'linear-gradient(135deg, #9350FF 0%, #27D3FF 100%)',
-        'gradient-ember': 'linear-gradient(135deg, #FF9E45 0%, #FFD76A 100%)',
-        'gradient-comet': 'linear-gradient(135deg, #FF3D9A 0%, #9350FF 100%)',
-        'gradient-void': 'radial-gradient(circle at 50% 0%, #1C2247 0%, #0D1026 55%, #080A16 100%)',
+        // Translucent Glass Border System for Dark Mode
+        'dark-border': {
+          DEFAULT: 'rgba(255, 255, 255, 0.07)',  // Ultra-subtle translucent glass border
+          subtle: 'rgba(255, 255, 255, 0.05)',
+          elevated: 'rgba(255, 255, 255, 0.10)',
+          hover: 'rgba(255, 255, 255, 0.15)',
+          accent: 'rgba(56, 189, 248, 0.35)',   // Electric sky accent border on focus/active
+        },
+        'lodavia-sky': {
+          50: '#F0F9FF',
+          100: '#E0F2FE',
+          200: '#BAE6FD',
+          300: '#7DD3FC',
+          400: '#38BDF8',
+          500: '#0EA5E9',
+          600: '#0284C7',
+          700: '#0369A1',
+        },
+        'lodavia-cyan': {
+          50: '#ECFEFF',
+          100: '#CFFAFE',
+          300: '#67E8F9',
+          400: '#22D3EE',
+          500: '#06B6D4',
+        },
       },
       boxShadow: {
-        'glow-nova': '0 0 24px rgba(147,80,255,0.45)',
-        'glow-aurora': '0 0 24px rgba(39,211,255,0.45)',
-        'glow-comet': '0 0 24px rgba(255,61,154,0.4)',
-        'glow-ember': '0 0 24px rgba(255,158,69,0.4)',
+        // Soft Glow Shadows strictly for Accent Buttons & Active states
+        'accent-glow': '0 2px 14px rgba(14, 165, 233, 0.35), 0 0 24px -4px rgba(56, 189, 248, 0.25)',
+        'accent-glow-hover': '0 4px 20px rgba(14, 165, 233, 0.45), 0 0 30px -2px rgba(56, 189, 248, 0.35)',
+        'cyan-glow': '0 0 20px -3px rgba(6, 182, 212, 0.35), 0 2px 10px rgba(6, 182, 212, 0.2)',
+        'gold-glow': '0 2px 14px rgba(217, 185, 104, 0.35), 0 0 20px -4px rgba(217, 185, 104, 0.25)',
+
+        // Linear/Vercel Depth Elevation Shadows with 1px translucent border highlight
+        'dark-elevation-1': '0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06)',
+        'dark-elevation-2': '0 8px 32px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+        'dark-elevation-3': '0 16px 48px -6px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.12)',
+      },
+      backgroundImage: {
+        // Subtle Gradients for large dark mode backgrounds and cards
+        'dark-canvas': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.07), transparent 100%), linear-gradient(180deg, #0D1527 0%, #070B14 100%)',
+        'dark-card': 'linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0) 100%), linear-gradient(180deg, #0F182E 0%, #0D1527 100%)',
+        'dark-elevated': 'linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0) 100%), linear-gradient(180deg, #162440 0%, #131F37 100%)',
+        'dark-active': 'linear-gradient(180deg, #1E3156 0%, #1A2B4C 100%)',
+      },
+      // Strict Unified Design System Spacing Scale (4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px)
+      spacing: {
+        '3xs': '4px',    // 4px
+        '2xs': '8px',    // 8px
+        'xs': '12px',    // 12px
+        'sm': '16px',    // 16px
+        'md': '24px',    // 24px
+        'lg': '32px',    // 32px
+        'xl': '48px',    // 48px
+        '2xl': '64px',   // 64px
+      },
+      // Responsive Fluid Typography Scale
+      fontSize: {
+        'display': ['clamp(2rem, 5vw, 3.25rem)', { lineHeight: '1.15', letterSpacing: '-0.02em', fontWeight: '800' }],
+        'h1': ['clamp(1.75rem, 3.5vw, 2.25rem)', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '800' }],
+        'h2': ['clamp(1.35rem, 2.5vw, 1.75rem)', { lineHeight: '1.25', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'h3': ['clamp(1.125rem, 1.8vw, 1.35rem)', { lineHeight: '1.3', letterSpacing: '-0.01em', fontWeight: '600' }],
+        'h4': ['clamp(1rem, 1.4vw, 1.125rem)', { lineHeight: '1.4', fontWeight: '600' }],
+        'body-lg': ['1.125rem', { lineHeight: '1.6', fontWeight: '400' }],
+        'body': ['1rem', { lineHeight: '1.6', fontWeight: '400' }],
+        'body-sm': ['0.875rem', { lineHeight: '1.5', fontWeight: '400' }],
+        'caption': ['0.75rem', { lineHeight: '1.4', fontWeight: '500' }],
+        'overline': ['0.6875rem', { lineHeight: '1.3', letterSpacing: '0.05em', fontWeight: '600' }],
+      },
+      // Uniform Card Geometry Tokens
+      borderRadius: {
+        'card': '16px',         // Standard Uniform Card Border Radius (rounded-2xl equivalent)
+        'card-sm': '12px',      // Compact/Nested Card Radius (rounded-xl equivalent)
+        'card-lg': '20px',      // Featured/Modal Outer Border Radius
       },
     },
   },
   plugins: [],
 };
+

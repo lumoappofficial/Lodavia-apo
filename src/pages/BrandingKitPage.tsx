@@ -254,6 +254,14 @@ export default function BrandingKitPage() {
               : 'Complete official brand toolkit for the Lodavia ecosystem. Render modern planet-core visuals, download pixel-perfect SVG vectors and high-res PNG formats directly in your browser.'}
           </p>
         </div>
+
+        <button
+          onClick={() => navigate('/welcome')}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500/20 to-purple-600/20 hover:from-cyan-500/30 hover:to-purple-600/30 border border-cyan-400/30 text-cyan-300 text-xs font-mono font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(56,189,248,0.2)] cursor-pointer"
+        >
+          <Sparkles className="w-4 h-4 text-cyan-400" />
+          <span>{lang === 'ar' ? 'عرض البداية السينمائية' : 'Cinematic Intro & Onboarding'}</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

@@ -64,14 +64,14 @@ export default function MarkdownRenderer({ text, fontSizeClass = "text-xs" }: Ma
   const renderTextWithFormatting = (line: string) => {
     let result = line;
     // Replace markdown bold **text** with strong tag
-    result = result.replace(/\*\*([\s\S]*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
+    result = result.replace(/\*\*([\s\S]*?)\*\*/g, '<strong class="font-bold text-slate-900 dark:text-white">$1</strong>');
     // Replace markdown inline code `code` with code tag
-    result = result.replace(/`([^`]+)`/g, '<code class="bg-black/40 px-1.5 py-0.5 rounded text-pink-300 font-mono text-[11px] border border-white/5">$1</code>');
+    result = result.replace(/`([^`]+)`/g, '<code class="bg-slate-200 dark:bg-black/40 px-1.5 py-0.5 rounded text-pink-600 dark:text-pink-300 font-mono text-[11px] border border-slate-300 dark:border-white/5">$1</code>');
     return <span dangerouslySetInnerHTML={{ __html: result }} />;
   };
 
   return (
-    <div className={`space-y-2.5 font-sans leading-relaxed text-slate-100 ${fontSizeClass}`}>
+    <div className={`space-y-2.5 font-sans leading-relaxed text-slate-800 dark:text-slate-100 ${fontSizeClass}`}>
       {parts.map((part, index) => {
         // Is this part a code block?
         if (part.startsWith("```")) {
@@ -120,7 +120,7 @@ export default function MarkdownRenderer({ text, fontSizeClass = "text-xs" }: Ma
               // Headers: ###, ##, #
               if (trimmed.startsWith("### ")) {
                 return (
-                  <h4 key={lineIdx} className="text-sm font-bold text-cyan-300 mt-3 mb-1 tracking-wide flex items-center gap-1">
+                  <h4 key={lineIdx} className="text-sm font-bold text-sky-600 dark:text-cyan-300 mt-3 mb-1 tracking-wide flex items-center gap-1">
                     <span className="text-purple-500 font-mono">■</span>
                     {renderTextWithFormatting(trimmed.substring(4))}
                   </h4>
@@ -128,14 +128,14 @@ export default function MarkdownRenderer({ text, fontSizeClass = "text-xs" }: Ma
               }
               if (trimmed.startsWith("## ")) {
                 return (
-                  <h3 key={lineIdx} className="text-base font-black text-white mt-4 mb-1.5 border-b border-white/5 pb-1 tracking-wider">
+                  <h3 key={lineIdx} className="text-base font-black text-slate-900 dark:text-white mt-4 mb-1.5 border-b border-slate-200 dark:border-white/5 pb-1 tracking-wider">
                     {renderTextWithFormatting(trimmed.substring(3))}
                   </h3>
                 );
               }
               if (trimmed.startsWith("# ")) {
                 return (
-                  <h2 key={lineIdx} className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-300 mt-5 mb-2">
+                  <h2 key={lineIdx} className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-purple-600 to-indigo-600 dark:from-purple-400 dark:via-pink-400 dark:to-cyan-300 mt-5 mb-2">
                     {renderTextWithFormatting(trimmed.substring(2))}
                   </h2>
                 );
@@ -144,8 +144,8 @@ export default function MarkdownRenderer({ text, fontSizeClass = "text-xs" }: Ma
               // Bullets: - or *
               if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
                 return (
-                  <div key={lineIdx} className="flex items-start gap-2 pl-2 my-1 text-slate-200">
-                    <span className="text-purple-400 select-none mt-1.5 text-[8px]">●</span>
+                  <div key={lineIdx} className="flex items-start gap-2 pl-2 my-1 text-slate-800 dark:text-slate-200">
+                    <span className="text-sky-500 dark:text-purple-400 select-none mt-1.5 text-[8px]">●</span>
                     <span className="flex-1">{renderTextWithFormatting(trimmed.substring(2))}</span>
                   </div>
                 );
@@ -157,7 +157,7 @@ export default function MarkdownRenderer({ text, fontSizeClass = "text-xs" }: Ma
               }
 
               return (
-                <p key={lineIdx} className="text-slate-200 leading-relaxed font-sans">
+                <p key={lineIdx} className="text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
                   {renderTextWithFormatting(line)}
                 </p>
               );

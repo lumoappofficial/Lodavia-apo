@@ -1,3 +1,11 @@
+import { UserSubscription } from './subscription';
+import { EquippedCosmetics } from './cosmicPacks';
+
+export * from './i18n';
+export * from './subscription';
+export * from './projectJury';
+export * from './call';
+
 export interface AppUser {
   id: string;
   name: string;
@@ -9,13 +17,27 @@ export interface AppUser {
   country: string;
   language: string;
   interests: string[];
+  hobbies?: string[];
   achievements: Array<{ id: string; title: string; description: string; icon: string }>;
   joinedCommunities: string[]; // Community IDs
   enrolledCourses: string[]; // Course IDs
   followersCount: number;
   followingCount: number;
   points: number; // For watching ads & in-app purchases
+  shards?: number; // Cosmic Shards currency
+  inventory?: string[]; // Owned cosmetic item IDs
+  equippedCosmetics?: EquippedCosmetics; // Equipped frame, bg, title, etc.
+  favoriteCosmetics?: string[]; // Favorite item IDs
+  newCosmetics?: string[]; // Unseen new item IDs
+  lastDailyRewardClaim?: string | null; // Last daily reward timestamp
   purchasedItems: string[]; // IDs of items purchased
+  isPremium?: boolean;
+  socialLinks?: { platform: string; label: string; url: string }[];
+  subscription?: UserSubscription;
+  journeyStats?: { learning: number; helping: number; creating: number; gaming: number; community: number };
+  emailVerified?: boolean;
+  isAnonymous?: boolean;
+  role?: 'user' | 'moderator' | 'admin';
 }
 
 export interface VoiceRoom {
@@ -123,6 +145,13 @@ export interface ChatConversation {
   isVerified?: boolean;
   isTyping?: boolean;
   lastSeen?: string;
+  isPinned?: boolean;
+  pinned?: boolean;
+  isMuted?: boolean;
+  isBlocked?: boolean;
+  blockedAt?: string;
+  category?: 'direct' | 'group' | 'channel' | 'archived';
+  badge?: string;
 }
 
 export interface CommunityItem {
@@ -167,3 +196,32 @@ export interface FeedPostType {
   category: 'general' | 'trending' | 'suggested' | 'ai' | 'polls';
 }
 
+export interface FactComment {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface Fact {
+  id: string;
+  date: string;
+  textAr: string;
+  textEn: string;
+  category: string;
+  sourceName: string;
+  sourceUrl: string;
+  likesCount: number;
+  commentsCount: number;
+  usefulCount: number;
+  notUsefulCount: number;
+  likesBy?: string[];
+  savedBy?: string[];
+  usefulBy?: string[];
+  notUsefulBy?: string[];
+  comments?: FactComment[];
+}
+
+export * from './lodaviaNow';

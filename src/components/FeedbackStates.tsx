@@ -22,23 +22,23 @@ export function LoadingState({ message = 'Loading quantum state...' }: { message
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-          className="absolute inset-0 rounded-full border-2 border-dashed border-purple-500/30"
+          className="absolute inset-0 rounded-full border-2 border-dashed border-sky-400/40"
         />
         <motion.div 
           animate={{ rotate: -360 }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          className="absolute -inset-2 rounded-full border border-cyan-400/20"
+          className="absolute -inset-2 rounded-full border border-cyan-400/30"
         />
         {/* Main glowing particle */}
         <motion.div 
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute inset-6 bg-gradient-to-tr from-purple-600 to-cyan-400 rounded-full blur-sm shadow-[0_0_30px_rgba(147,51,234,0.6)] flex items-center justify-center"
+          className="absolute inset-6 bg-gradient-to-tr from-sky-500 to-cyan-400 rounded-full blur-sm shadow-[0_0_20px_rgba(14,165,233,0.4)] flex items-center justify-center"
         >
           <Sparkles className="w-5 h-5 text-white animate-spin" style={{ animationDuration: '6s' }} />
         </motion.div>
       </div>
-      <p className="text-xs font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-slate-200 to-cyan-300 uppercase">
+      <p className="text-xs font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600 uppercase">
         {message}
       </p>
     </div>
@@ -63,16 +63,16 @@ export function EmptyState({
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="glass-panel p-8 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center max-w-md mx-auto my-6 gap-4 shadow-xl"
+      className="glass-panel p-8 rounded-3xl border border-slate-200/80 flex flex-col items-center justify-center text-center max-w-md mx-auto my-6 gap-4 shadow-sm"
     >
-      <div className="w-16 h-16 rounded-full bg-slate-900/50 border border-white/10 flex items-center justify-center relative">
-        <div className="absolute inset-0 bg-cyan-500/10 rounded-full blur-lg" />
-        <Compass className="w-8 h-8 text-cyan-400 animate-pulse" />
+      <div className="w-16 h-16 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center relative">
+        <div className="absolute inset-0 bg-sky-400/10 rounded-full blur-lg" />
+        <Compass className="w-8 h-8 text-sky-500 animate-pulse" />
       </div>
       
       <div className="flex flex-col gap-1.5">
-        <h3 className="text-sm font-black text-white uppercase tracking-wider">{title}</h3>
-        <p className="text-xs text-slate-400 leading-relaxed font-sans">{description}</p>
+        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">{title}</h3>
+        <p className="text-xs text-slate-600 leading-relaxed font-sans">{description}</p>
       </div>
 
       {actionText && onAction && (
@@ -81,7 +81,7 @@ export function EmptyState({
             playSynthSound(600, 'sine', 0.08);
             onAction();
           }}
-          className="mt-2 text-xs font-black uppercase bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white py-2.5 px-6 rounded-full shadow-lg transition-all active:scale-95 cursor-pointer"
+          className="mt-2 text-xs font-black uppercase bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white py-2.5 px-6 rounded-full shadow-md shadow-sky-500/20 transition-all active:scale-95 cursor-pointer"
         >
           {actionText}
         </button>

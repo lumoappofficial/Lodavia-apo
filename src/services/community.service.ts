@@ -30,12 +30,7 @@ export const communityService = {
         }
         return snap.docs.map(d => d.data()) as CommunityItem[];
       } catch (err) {
-        console.warn("Firestore error getting communities, loading local:", err);
-        try {
-          handleFirestoreError(err, OperationType.LIST, collPath);
-        } catch (wrappedErr) {
-          console.error("Firestore Error Wrapped:", wrappedErr);
-        }
+        console.warn("Firestore error getting communities, loading local fallback:", err);
         return storage.load<CommunityItem[]>('lumo_communities', allCommunities);
       }
     } else {
@@ -93,7 +88,20 @@ export const communityService = {
           callback(rooms);
         },
         (error) => {
-          handleFirestoreError(error, OperationType.LIST, collPath);
+          console.warn("Firestore error fetching voice rooms, using local fallback:", error);
+          const defaultRooms: VoiceRoom[] = [
+            {
+              id: 'voice_prog_1',
+              title: 'جلسة كود ونقاش حول لغات المستقبل 🛠️',
+              hostName: 'صالح العمري',
+              hostAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80',
+              listenersCount: 142,
+              speakersCount: 5,
+              tags: ['React', 'TypeScript', 'Rust']
+            }
+          ];
+          const rooms = storage.load<VoiceRoom[]>('lumo_voice_rooms', defaultRooms);
+          callback(rooms);
         }
       );
     } else {

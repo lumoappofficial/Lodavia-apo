@@ -5,7 +5,7 @@ import { AppUser, CommunityItem } from "../../types";
 
 interface CommunityHomeProps {
   currentUser: AppUser;
-  lang: "ar" | "en";
+  lang: string;
   communities: CommunityItem[];
   setCommunities: React.Dispatch<React.SetStateAction<CommunityItem[]>>;
   setActiveCommunity: (comm: CommunityItem | null) => void;

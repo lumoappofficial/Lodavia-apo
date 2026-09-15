@@ -28,7 +28,7 @@ interface ExtendedPost extends Post {
 
 interface CommunityFeedProps {
   currentUser: AppUser;
-  lang: "ar" | "en";
+  lang: string;
   activeCommunity: CommunityItem;
   setCommunities: React.Dispatch<React.SetStateAction<CommunityItem[]>>;
   setActiveCommunity: (comm: CommunityItem | null) => void;

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Mic, MicOff, Volume2, VolumeX, Radio, Sparkles, AlertCircle } from "lucide-react";
+import LodaviaMascot from "./LodaviaMascot";
 
 interface VoiceLiveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  lang: "ar" | "en";
+  lang: string;
   currentUser: any;
   playSynthSound: (frequency: number, type?: 'sine' | 'triangle' | 'sawtooth' | 'square', duration?: number) => void;
 }
@@ -359,13 +360,16 @@ export default function VoiceLiveModal({
                   status === "thinking" ? "from-yellow-500 via-amber-600 to-orange-500" :
                   status === "listening" ? "from-cyan-500 via-teal-400 to-emerald-500" :
                   "from-slate-800 to-slate-900 border border-white/10"
-                } shadow-[0_0_50px_rgba(124,58,237,0.4)] flex items-center justify-center z-10`}
+                } shadow-[0_0_50px_rgba(124,58,237,0.4)] flex items-center justify-center z-10 overflow-hidden p-2`}
               >
-                {status === "listening" && <Radio className="w-8 h-8 text-white animate-pulse" />}
-                {status === "thinking" && <Sparkles className="w-8 h-8 text-white animate-spin-slow" />}
-                {status === "speaking" && <Volume2 className="w-8 h-8 text-white animate-bounce" />}
-                {status === "idle" && <Mic className="w-8 h-8 text-slate-300" />}
-                {status === "error" && <AlertCircle className="w-8 h-8 text-red-400" />}
+                <LodaviaMascot 
+                  size={84} 
+                  animated={true} 
+                  interactive={true} 
+                  showAura={false}
+                  isThinking={status === "thinking"}
+                  isSpeaking={status === "speaking"}
+                />
               </motion.div>
             </div>
 

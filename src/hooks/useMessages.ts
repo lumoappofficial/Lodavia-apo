@@ -1,6 +1,6 @@
 import { useApp } from '../contexts/AppContext';
 import { chatService } from '../services/chat.service';
-import { ChatMessage } from '../types';
+import { ChatMessage, ChatConversation } from '../types';
 
 export function useMessages() {
   const {
@@ -38,6 +38,37 @@ export function useMessages() {
       if (activeChat && activeChat.id === chatId) {
         setActiveChat({ ...activeChat, unreadCount: count });
       }
+    },
+    togglePinChat: async (chatId: string) => {
+      const isPinned = await chatService.togglePinChat(chatId);
+      setChats(prev => prev.map(c => c.id === chatId ? { ...c, isPinned, pinned: isPinned } : c));
+      if (activeChat && activeChat.id === chatId) {
+        setActiveChat({ ...activeChat, isPinned, pinned: isPinned });
+      }
+      return isPinned;
+    },
+    toggleBlockChat: async (chatId: string) => {
+      const isBlocked = await chatService.toggleBlockChat(chatId);
+      setChats(prev => prev.map(c => c.id === chatId ? { ...c, isBlocked } : c));
+      if (activeChat && activeChat.id === chatId) {
+        setActiveChat({ ...activeChat, isBlocked });
+      }
+      return isBlocked;
+    },
+    setChatBlocked: async (chatId: string, isBlocked: boolean) => {
+      await chatService.setChatBlocked(chatId, isBlocked);
+      setChats(prev => prev.map(c => c.id === chatId ? { ...c, isBlocked } : c));
+      if (activeChat && activeChat.id === chatId) {
+        setActiveChat({ ...activeChat, isBlocked });
+      }
+    },
+    createConversation: async (conv: ChatConversation) => {
+      await chatService.createConversation(conv);
+      setChats(prev => {
+        if (prev.some(c => c.id === conv.id)) return prev;
+        return [conv, ...prev];
+      });
+      setActiveChat(conv);
     },
     subscribeConversations: (userId: string) => {
       return chatService.getConversations(userId, (loaded) => {

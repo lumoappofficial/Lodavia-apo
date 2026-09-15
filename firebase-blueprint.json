@@ -90,6 +90,44 @@
         "attendeesCount": { "type": "number" }
       },
       "required": ["id", "title", "date", "time"]
+    },
+    "FactComment": {
+      "title": "FactComment",
+      "description": "A comment on a fact of the day",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "userId", "userName", "text", "timestamp"]
+    },
+    "Fact": {
+      "title": "Fact of the Day",
+      "description": "A daily verified fact with sources, links, and user interactions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "textAr": { "type": "string" },
+        "textEn": { "type": "string" },
+        "category": { "type": "string" },
+        "sourceName": { "type": "string" },
+        "sourceUrl": { "type": "string" },
+        "likesCount": { "type": "number" },
+        "commentsCount": { "type": "number" },
+        "usefulCount": { "type": "number" },
+        "notUsefulCount": { "type": "number" },
+        "likesBy": { "type": "array" },
+        "savedBy": { "type": "array" },
+        "usefulBy": { "type": "array" },
+        "notUsefulBy": { "type": "array" },
+        "comments": { "type": "array" }
+      },
+      "required": ["id", "date", "textAr", "textEn", "category", "sourceName", "sourceUrl"]
     }
   },
   "firestore": {
@@ -112,6 +150,10 @@
     "/events/{eventId}": {
       "schema": "Event",
       "description": "Global or community events board"
+    },
+    "/facts/{factId}": {
+      "schema": "Fact",
+      "description": "Fact of the day documents and archive"
     }
   }
 }

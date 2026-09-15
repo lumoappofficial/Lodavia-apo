@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import LodaviaGlobe3D from './RealisticEarthGlobe3D';
+import UniverseExplorer3D from './UniverseExplorer3D';
 import { 
   Globe, Sparkles, MapPin, Users, Mic, Video, Calendar, 
   TrendingUp, Compass, ArrowLeft, Check, Plus, MessageSquare, 
@@ -394,7 +395,7 @@ const floatingParticles = [
 interface LumoWorldProps {
   currentUser: any;
   setCurrentUser: React.Dispatch<React.SetStateAction<any>>;
-  lang: 'ar' | 'en';
+  lang: string;
   playSynthSound: (freq: number, type: 'sine' | 'square' | 'sawtooth' | 'triangle', duration: number) => void;
   setActiveTab: (tab: any) => void;
 }
@@ -409,7 +410,7 @@ export default function LumoWorld({
 
   // Selection & Mode State
   const [selectedHub, setSelectedHub] = useState<MapHub>(mapHubs[0]);
-  const [mapMode, setMapMode] = useState<'globe' | 'flat'>('globe');
+  const [mapMode, setMapMode] = useState<'globe' | 'flat' | 'universe'>('globe');
 
   // 3D Globe States
   const [rotation, setRotation] = useState<number>(0);
@@ -730,10 +731,10 @@ export default function LumoWorld({
   const activeHubs = getFilteredMapHubs();
 
   return (
-    <div className="w-full text-slate-100 flex flex-col min-h-screen pb-24" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="w-full text-slate-900 dark:text-slate-100 flex flex-col min-h-screen pb-24" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       
       {/* HEADER CONTROLS SECTION */}
-      <div className="relative overflow-hidden rounded-3xl bg-slate-900/35 dark:bg-[#090812]/45 backdrop-blur-xl border border-white/10 dark:border-white/5 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-[0_15px_45px_rgba(0,0,0,0.35)] shadow-purple-950/10 mb-8 transition-all duration-300 hover:shadow-[0_20px_55px_rgba(124,58,237,0.1)]">
+      <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#090812]/75 backdrop-blur-xl border border-slate-200 dark:border-white/10 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl mb-8 transition-all duration-300">
         <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px] pointer-events-none animate-pulse" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none animate-pulse" />
         
@@ -742,10 +743,10 @@ export default function LumoWorld({
             <Globe className="w-7 h-7 text-white animate-spin" style={{ animationDuration: '30s' }} />
           </div>
           <div>
-            <h1 className="text-xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2">
+            <h1 className="text-xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
               <span>{lang === 'ar' ? 'مستكشف عالم لودافيا الكوني 🪐' : 'Lodavia Cosmic World Explorer 🪐'}</span>
             </h1>
-            <p className="text-xs text-slate-300 mt-2 leading-relaxed max-w-2xl">
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed max-w-2xl">
               {lang === 'ar' 
                 ? 'استكشف خارطة الأنشطة الرقمية والتواصل الفوري حول العالم. تفاعل مع غرف المحادثة المباشرة، البثوث التقنية الحية، والمطابقات الودية بناء على التوزيع الجغرافي الذكي.'
                 : 'Immerse yourself in a holographic, real-time activity landscape across major digital hubs. Hop into live voice rooms, spectate ongoing dev streams, and discover developers globally.'}
@@ -754,7 +755,7 @@ export default function LumoWorld({
         </div>
 
         {/* View mode selectors: 3D Hologlobe or High-Tech Flat Radar Map */}
-        <div className="flex bg-slate-950/40 border border-white/10 backdrop-blur-md rounded-2xl p-1 z-10 shrink-0 w-full md:w-auto">
+        <div className="flex bg-slate-100 dark:bg-slate-950/40 border border-slate-200 dark:border-white/10 backdrop-blur-md rounded-2xl p-1 z-10 shrink-0 w-full md:w-auto">
           <button
             onClick={() => {
               playSynthSound(600, 'sine', 0.05);
@@ -763,7 +764,7 @@ export default function LumoWorld({
             className={`flex-1 md:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
               mapMode === 'globe' 
                 ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg border border-white/10' 
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Globe className="w-4 h-4" />
@@ -777,7 +778,7 @@ export default function LumoWorld({
             className={`flex-1 md:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
               mapMode === 'flat' 
                 ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-slate-950 shadow-lg border border-white/10' 
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Compass className="w-4 h-4" />
@@ -785,28 +786,88 @@ export default function LumoWorld({
           </button>
           <button
             onClick={() => {
+              playSynthSound(700, 'sine', 0.08);
+              setMapMode('universe');
+            }}
+            className={`flex-1 md:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              mapMode === 'universe' 
+                ? 'bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 text-white shadow-lg border border-white/10' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-pink-500 dark:text-pink-400 animate-pulse" />
+            <span>{lang === 'ar' ? 'مستكشف الكون 🪐' : 'Universe Explorer 🪐'}</span>
+          </button>
+          <button
+            onClick={() => {
               playSynthSound(600, 'sine', 0.05);
               setActiveTab('lodavia-match');
             }}
-            className="flex-1 md:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer text-slate-400 hover:text-white"
+            className="flex-1 md:flex-initial px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           >
-            <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
+            <Sparkles className="w-4 h-4 text-cyan-500 dark:text-cyan-400 animate-pulse" />
             <span>{lang === 'ar' ? 'المطابقة الذكية' : 'Smart Match'}</span>
           </button>
         </div>
       </div>
 
+      {/* MODE GUIDANCE & EXPLANATION BANNER */}
+      <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-slate-950 via-purple-950 to-slate-950 border border-cyan-500/40 text-xs text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shrink-0">
+            {mapMode === 'globe' && <Globe className="w-5 h-5 animate-pulse" />}
+            {mapMode === 'flat' && <Compass className="w-5 h-5 animate-pulse" />}
+            {mapMode === 'universe' && <Sparkles className="w-5 h-5 text-pink-400 animate-pulse" />}
+          </div>
+          <div>
+            <h2 className="text-sm font-black text-white flex items-center gap-2">
+              <span>
+                {mapMode === 'globe' && (lang === 'ar' ? 'الكرة الكونية ثلاثية الأبعاد 🌐' : '3D Cosmic Hologlobe 🌐')}
+                {mapMode === 'flat' && (lang === 'ar' ? 'الرادار المسطح ثنائي الأبعاد 📡' : 'High-Tech Flat Radar 📡')}
+                {mapMode === 'universe' && (lang === 'ar' ? 'مستكشف الكون والفيزياء 🪐' : 'Universe Explorer & Physics 🪐')}
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                {lang === 'ar' ? 'نشط الآن' : 'Active View'}
+              </span>
+            </h2>
+            <p className="text-[11px] text-slate-200 mt-0.5 leading-relaxed">
+              {mapMode === 'globe' && (lang === 'ar' 
+                ? '💡 قم بسحب الكرة الكونية بالماوس لتدوير الأرض، وانقر على العقد المضيئة لاستكشاف الغرف الصوتية والبث المباشر والدول.' 
+                : '💡 Drag the 3D globe to rotate Earth. Click glowing nodes to inspect live voice rooms, creators, and streams per country.')}
+              {mapMode === 'flat' && (lang === 'ar' 
+                ? '💡 الرادار المسطح يعرض خريطة مسطحة للمراكز الرقمية مع إمكانية التصفية باللغة والأنشطة وإشارة البث.' 
+                : '💡 Flat Radar presents a 2D high-tech layout of global tech hubs with latitude/longitude filtering.')}
+              {mapMode === 'universe' && (lang === 'ar' 
+                ? '💡 مستكشف الكون يتيح لك رؤية كواكب المجموعة الشمسية ثلاثية الأبعاد واختبار إطلاق الصواريخ وحساب الجاذبية.' 
+                : '💡 Universe Explorer lets you inspect 3D solar system planets, run atmospheric physics, and test rocket escape velocity.')}
+            </p>
+          </div>
+        </div>
+
+        {/* Quick jump to Smart Match */}
+        <button
+          onClick={() => {
+            playSynthSound(600, 'sine', 0.05);
+            setActiveTab('lodavia-match');
+          }}
+          className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs shrink-0 cursor-pointer shadow-md flex items-center gap-1.5 border border-cyan-400/30"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>{lang === 'ar' ? 'انتقل إلى المطابقة الذكية ⚡' : 'Go to Smart Match ⚡'}</span>
+        </button>
+      </div>
+
       {/* DETAILED ACTIVE FILTER BAR */}
-      <div className="glass-panel p-4.5 rounded-3xl border border-white/10 bg-slate-900/30 dark:bg-black/30 backdrop-blur-xl flex flex-wrap gap-4 items-center justify-between mb-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] hover:shadow-[0_12px_40px_0_rgba(39,211,255,0.08)] transition-all duration-300">
+      <div className="p-4.5 rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 backdrop-blur-xl flex flex-wrap gap-4 items-center justify-between mb-8 shadow-md transition-all duration-300">
         
         {/* Filters and Search buttons */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <span className="text-[10px] uppercase tracking-wider font-black text-slate-400 flex items-center gap-1.5">
-            <Sliders className="w-4 h-4 text-cyan-400" />
+          <span className="text-[10px] uppercase tracking-wider font-black text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+            <Sliders className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
             <span>{lang === 'ar' ? 'التصفية الفلكية:' : 'Cosmic Filters:'}</span>
           </span>
 
-          <div className="flex bg-slate-950/40 border border-white/10 rounded-xl p-0.5">
+          <div className="flex bg-slate-100 dark:bg-slate-950/40 border border-slate-200 dark:border-white/10 rounded-xl p-0.5">
             {(['all', 'rooms', 'streams', 'events'] as const).map((t) => (
               <button
                 key={t}
@@ -816,8 +877,8 @@ export default function LumoWorld({
                 }}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer ${
                   filterType === t 
-                    ? 'bg-white/10 text-white' 
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-cyan-500 text-slate-950 font-black shadow' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 {t === 'all' ? (lang === 'ar' ? 'الكل' : 'All') : ''}
@@ -835,7 +896,7 @@ export default function LumoWorld({
               playSynthSound(400, 'sine', 0.04);
               setSelectedLanguageFilter(e.target.value);
             }}
-            className="bg-slate-950/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-[10px] text-slate-300 focus:outline-none focus:border-cyan-500"
+            className="bg-slate-100 dark:bg-slate-950/60 border border-slate-300 dark:border-white/10 rounded-xl px-2.5 py-1.5 text-[10px] text-slate-800 dark:text-slate-200 focus:outline-none focus:border-cyan-500"
           >
             <option value="All">{lang === 'ar' ? 'جميع اللغات' : 'All Languages'}</option>
             <option value="Arabic">{lang === 'ar' ? 'العربية' : 'Arabic'}</option>
@@ -846,10 +907,10 @@ export default function LumoWorld({
         </div>
 
         {/* Live system telemetry line */}
-        <div className="flex items-center gap-4 text-[10px] font-mono text-slate-400">
+        <div className="flex items-center gap-4 text-[10px] font-mono text-slate-600 dark:text-slate-400">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span className="text-cyan-400">{lang === 'ar' ? 'الإشارة الكونية:' : 'SIGNAL:'} {telemetrySignalStrength}%</span>
+            <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-ping" />
+            <span className="text-cyan-600 dark:text-cyan-400 font-bold">{lang === 'ar' ? 'الإشارة الكونية:' : 'SIGNAL:'} {telemetrySignalStrength}%</span>
           </div>
           <div className="hidden sm:block">
             <span>{lang === 'ar' ? 'الزمن الفلكي:' : 'UTC_COSMOS:'} {telemetryTime}</span>
@@ -858,12 +919,31 @@ export default function LumoWorld({
       </div>
 
       {/* CORE DISPLAY: MAP & DATA SPLIT PANELS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {mapMode === 'universe' ? (
+        <motion.div
+          key="universe-explorer-panel"
+          initial={{ opacity: 0, scale: 0.96, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="w-full"
+        >
+          <UniverseExplorer3D
+            lang={lang}
+            playSynthSound={playSynthSound}
+            onBackToEarth={() => {
+              playSynthSound(440, 'sine', 0.15);
+              setMapMode('globe');
+            }}
+          />
+        </motion.div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left Interactive Map Column (7 cols) */}
         <div className="lg:col-span-7 flex flex-col gap-6">
           
-          <div className="glass-panel p-6 rounded-3xl border border-white/10 bg-slate-900/20 dark:bg-black/40 backdrop-blur-2xl relative overflow-hidden flex flex-col items-center shadow-[0_20px_50px_rgba(0,0,0,0.4)] hover:shadow-[0_25px_60px_rgba(39,211,255,0.1)] transition-all duration-500">
+          <div className="p-6 rounded-3xl border border-cyan-500/30 bg-[#050814] text-white backdrop-blur-2xl relative overflow-hidden flex flex-col items-center shadow-2xl transition-all duration-500">
             
             {/* PREMIUM COSMIC DEEP-SPACE BACKDROP */}
             <div className="absolute inset-0 pointer-events-none select-none z-0 overflow-hidden">
@@ -955,14 +1035,27 @@ export default function LumoWorld({
             </div>
 
             {/* Top action layout info */}
-            <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
-              <div className="px-3 py-1.5 rounded-full bg-black/60 border border-white/10 backdrop-blur-md text-[10px] font-mono text-cyan-400 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                <span>{lang === 'ar' ? 'محور التحكم التفاعلي' : 'COSMIC CORDS ENABLED'}</span>
+            <div className="absolute top-4 left-4 right-4 z-10 flex flex-wrap justify-between items-center gap-2 pointer-events-auto">
+              <div className="flex items-center gap-2">
+                <div className="px-3 py-1.5 rounded-full bg-black/60 border border-white/10 backdrop-blur-md text-[10px] font-mono text-cyan-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <span>{lang === 'ar' ? 'محور التحكم التفاعلي' : 'COSMIC CORDS ENABLED'}</span>
+                </div>
+
+                <button
+                  onClick={() => {
+                    playSynthSound(800, 'sine', 0.1);
+                    setActiveTab('parallel-world');
+                  }}
+                  className="px-3.5 py-1 rounded-full bg-gradient-to-r from-cyan-600/80 via-sky-500/80 to-blue-600/80 hover:from-cyan-500 hover:to-blue-500 text-white font-black text-xs border border-cyan-400/50 shadow-lg shadow-cyan-500/20 transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-spin-slow" />
+                  <span>{lang === 'ar' ? 'دخول العالم الموازي 🌌' : 'Enter Parallel World 🌌'}</span>
+                </button>
               </div>
               
               {mapMode === 'globe' && (
-                <div className="px-3 py-1.5 rounded-full bg-black/60 border border-white/10 backdrop-blur-md text-[10px] font-mono text-purple-400 flex items-center gap-1.5">
+                <div className="px-3 py-1.5 rounded-full bg-black/60 border border-cyan-500/30 backdrop-blur-md text-[10px] font-mono text-cyan-400 hidden sm:flex items-center gap-1.5">
                   <span>{lang === 'ar' ? 'تعديل التدوير يدوي متاح' : 'DRAG TO ROTATE GLOBE'}</span>
                 </div>
               )}
@@ -992,36 +1085,95 @@ export default function LumoWorld({
                   setAutoRotate={setAutoRotate}
                   zoom={zoom}
                   setZoom={setZoom}
+                  onEarthClick={() => {
+                    playSynthSound(220, 'triangle', 0.25);
+                    setMapMode('universe');
+                  }}
                 />
               ) : (
-                // 2. FLAT GRID RADAR VIEW
-                <div className="w-full aspect-[16/10] bg-[#030206] border border-white/5 rounded-2xl relative flex items-center justify-center overflow-hidden p-2">
+                // 2. HIGH-TECH FLAT RADAR VIEW
+                <div 
+                  className="w-full aspect-[16/10] border border-cyan-500/30 rounded-2xl relative flex items-center justify-center overflow-hidden p-2 shadow-[0_0_50px_rgba(6,182,212,0.15)]"
+                  style={{
+                    background: 'radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.14) 0%, rgba(10, 24, 48, 0.55) 35%, rgba(3, 7, 16, 0.92) 70%, #020408 100%)'
+                  }}
+                >
                   
-                  {/* Holographic scanning vertical swipe bar */}
+                  {/* Concentric Radar Distance Range Rings */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    {/* Outer 100% Boundary Ring */}
+                    <div className="w-[92%] h-[92%] rounded-full border border-cyan-400/25 relative flex items-center justify-center">
+                      <span className="absolute -top-3 text-[7px] font-mono tracking-widest text-cyan-400/60 uppercase">000° N • MAX SCOPE</span>
+                      <span className="absolute -bottom-3 text-[7px] font-mono tracking-widest text-cyan-400/60 uppercase">180° S</span>
+                      <span className="absolute -left-4 text-[7px] font-mono tracking-widest text-cyan-400/60 uppercase">270° W</span>
+                      <span className="absolute -right-4 text-[7px] font-mono tracking-widest text-cyan-400/60 uppercase">090° E</span>
+                    </div>
+                    {/* 75% Range Ring */}
+                    <div className="w-[69%] h-[69%] rounded-full border border-dashed border-cyan-400/20 absolute flex items-center justify-center">
+                      <span className="absolute top-1 text-[6.5px] font-mono text-cyan-500/40">5,000 KM</span>
+                    </div>
+                    {/* 50% Range Ring */}
+                    <div className="w-[46%] h-[46%] rounded-full border border-cyan-400/25 absolute flex items-center justify-center">
+                      <span className="absolute top-1 text-[6.5px] font-mono text-cyan-400/50">2,500 KM</span>
+                    </div>
+                    {/* 25% Range Ring */}
+                    <div className="w-[23%] h-[23%] rounded-full border border-dashed border-cyan-400/35 bg-cyan-500/5 absolute flex items-center justify-center">
+                      <span className="absolute top-1 text-[6.5px] font-mono text-cyan-300/60">1,000 KM</span>
+                    </div>
+                    {/* Azimuth Hairline Crosshairs */}
+                    <div className="absolute w-[92%] h-[0.5px] bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+                    <div className="absolute h-[92%] w-[0.5px] bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent" />
+                  </div>
+
+                  {/* ROTATING RADAR SWEEP (Continuous 360° rotation with trailing quarter-turn decay) */}
                   <motion.div 
-                    className="absolute top-0 bottom-0 w-0.5 bg-cyan-500/30 shadow-lg shadow-cyan-500/50 pointer-events-none z-10"
-                    animate={{
-                      left: ['0%', '100%', '0%']
+                    className="absolute w-[92%] h-[92%] rounded-full pointer-events-none z-10 origin-center"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
+                    style={{
+                      background: 'conic-gradient(from 0deg at 50% 50%, rgba(6, 182, 212, 0.35) 0deg, rgba(6, 182, 212, 0.14) 25deg, rgba(6, 182, 212, 0.02) 70deg, transparent 90deg, transparent 360deg)',
                     }}
-                    transition={{
-                      duration: 8,
-                      repeat: Infinity,
-                      ease: 'linear'
+                  >
+                    {/* Leading Radiant Beam Line */}
+                    <div 
+                      className="absolute top-0 left-1/2 w-0.5 h-1/2 bg-gradient-to-t from-cyan-300 via-sky-200 to-white -translate-x-1/2"
+                      style={{
+                        boxShadow: '0 0 14px 2px rgba(6, 182, 212, 0.9), 0 0 4px #ffffff',
+                      }}
+                    />
+                  </motion.div>
+
+                  {/* SONAR PULSE RINGS (Periodic outward sonar waves) */}
+                  <motion.div
+                    className="absolute rounded-full border border-cyan-400/60 pointer-events-none z-10"
+                    initial={{ width: 0, height: 0, opacity: 0.8 }}
+                    animate={{ width: ['0%', '92%'], height: ['0%', '92%'], opacity: [0.8, 0] }}
+                    transition={{ duration: 2.8, repeat: Infinity, ease: 'easeOut' }}
+                    style={{
+                      boxShadow: '0 0 16px rgba(6, 182, 212, 0.4), inset 0 0 12px rgba(6, 182, 212, 0.2)',
+                    }}
+                  />
+                  <motion.div
+                    className="absolute rounded-full border border-cyan-400/50 pointer-events-none z-10"
+                    initial={{ width: 0, height: 0, opacity: 0.8 }}
+                    animate={{ width: ['0%', '92%'], height: ['0%', '92%'], opacity: [0.8, 0] }}
+                    transition={{ duration: 2.8, delay: 1.4, repeat: Infinity, ease: 'easeOut' }}
+                    style={{
+                      boxShadow: '0 0 12px rgba(6, 182, 212, 0.3)',
                     }}
                   />
 
-                  {/* Grid squares */}
-                  <div className="absolute inset-0 grid grid-cols-12 grid-rows-8 opacity-[0.03] pointer-events-none">
-                    {Array.from({ length: 96 }).map((_, i) => (
-                      <div key={i} className="border border-white" />
-                    ))}
-                  </div>
+                  {/* Radar Tactical Corner Brackets */}
+                  <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+                  <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-cyan-400/60 pointer-events-none" />
+                  <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+                  <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-cyan-400/60 pointer-events-none" />
 
                   {/* Random scattered coordinates pings */}
                   {livePings.map((ping, i) => (
                     <motion.div
                       key={i}
-                      className="absolute px-2 py-0.5 rounded-md border border-cyan-500/20 bg-cyan-500/5 text-[6.5px] font-mono text-cyan-400 pointer-events-none"
+                      className="absolute px-2 py-0.5 rounded-md border border-cyan-500/25 bg-cyan-500/10 text-[6.5px] font-mono text-cyan-300 pointer-events-none z-10"
                       style={{ left: `${ping.x}%`, top: `${ping.y}%` }}
                       initial={{ opacity: 1, scale: 0.8 }}
                       animate={{ opacity: 0, scale: 1.1 }}
@@ -1032,8 +1184,8 @@ export default function LumoWorld({
                   ))}
 
                   {/* Stylized vector path outlines representation of regions */}
-                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.25]">
-                    <svg viewBox="0 0 800 400" className="w-full h-full fill-none stroke-cyan-500/20 stroke-1">
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.22]">
+                    <svg viewBox="0 0 800 400" className="w-full h-full fill-none stroke-cyan-400/25 stroke-1">
                       {/* Stylized geometric shapes simulating world continents */}
                       {/* Americas */}
                       <path d="M 120 80 L 220 80 L 190 200 L 120 200 Z" />
@@ -1049,40 +1201,78 @@ export default function LumoWorld({
                     </svg>
                   </div>
 
-                  {/* Connecting high-tech glowing vectors */}
+                  {/* Connecting high-tech glowing vectors with animated flowing packets */}
                   <svg viewBox="0 0 800 400" className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                    <defs>
+                      <filter id="radarPacketGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
                     {/* Draw real-time connections from active hubs on flat coordinates */}
                     {activeHubs.map((hub, idx) => {
                       if (idx === activeHubs.length - 1) return null;
                       const next = activeHubs[idx + 1];
                       // Normalize lat/lon coordinates to flat percentage coordinates
-                      // Lat: +90 (top) to -90 (bottom), Lon: -180 (left) to +180 (right)
                       const x1 = ((hub.lon + 180) / 360) * 800;
                       const y1 = ((90 - hub.lat) / 180) * 400;
                       const x2 = ((next.lon + 180) / 360) * 800;
                       const y2 = ((90 - next.lat) / 180) * 400;
+                      
+                      const isHighValue = hub.details.onlineCount >= 3000 || next.details.onlineCount >= 3000;
+                      const lineColor = isHighValue ? '#D9B968' : '#06b6d4';
 
                       return (
                         <g key={idx}>
+                          {/* Base line */}
                           <line 
                             x1={x1} y1={y1} x2={x2} y2={y2} 
-                            stroke={hub.glowColor} 
-                            strokeOpacity="0.25" 
+                            stroke={lineColor} 
+                            strokeOpacity="0.22" 
                             strokeWidth="1.5"
                             strokeDasharray="6 4"
                           />
+                          {/* Moving pulse dash laser */}
+                          <motion.line 
+                            x1={x1} y1={y1} x2={x2} y2={y2} 
+                            stroke={lineColor} 
+                            strokeOpacity="0.7" 
+                            strokeWidth="1.5"
+                            strokeDasharray="14 36"
+                            animate={{ strokeDashoffset: [0, -50] }}
+                            transition={{ duration: 2.2, repeat: Infinity, ease: 'linear' }}
+                          />
+                          {/* Traveling luminous data packets */}
                           <motion.circle 
-                            r="3" 
-                            fill="#ffffff" 
+                            r="3.5" 
+                            fill={isHighValue ? '#FDE68A' : '#ffffff'} 
+                            filter="url(#radarPacketGlow)"
                             animate={{
                               cx: [x1, x2],
                               cy: [y1, y2]
                             }}
                             transition={{
-                              duration: 4,
+                              duration: 3.5,
                               repeat: Infinity,
                               ease: "easeInOut",
-                              delay: idx * 0.7
+                              delay: idx * 0.6
+                            }}
+                          />
+                          <motion.circle 
+                            r="2" 
+                            fill={isHighValue ? '#D9B968' : '#38bdf8'} 
+                            animate={{
+                              cx: [x1, x2],
+                              cy: [y1, y2]
+                            }}
+                            transition={{
+                              duration: 3.5,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                              delay: idx * 0.6 + 0.12
                             }}
                           />
                         </g>
@@ -1090,11 +1280,13 @@ export default function LumoWorld({
                     })}
                   </svg>
 
-                  {/* ACTIVE HUBS LABELS ON FLAT COORDINATES */}
-                  {activeHubs.map((hub) => {
+                  {/* ACTIVE HUBS BLIPS ON FLAT COORDINATES (Value-based glow, scale, and breathing) */}
+                  {activeHubs.map((hub, idx) => {
                     const fx = ((hub.lon + 180) / 360) * 100;
                     const fy = ((90 - hub.lat) / 180) * 100;
                     const isSelected = selectedHub.id === hub.id;
+                    const isTopHub = hub.details.onlineCount >= 3000;
+                    const blipSize = isTopHub ? 15 : Math.max(10, Math.min(13, 10 + (hub.details.onlineCount / 4000) * 3));
 
                     return (
                       <div
@@ -1107,25 +1299,59 @@ export default function LumoWorld({
                         }}
                       >
                         <div className="relative flex items-center justify-center">
-                          {/* Pulse */}
-                          <div className={`absolute w-8 h-8 rounded-full border opacity-50 animate-ping ${
-                            isSelected ? 'border-purple-400' : 'border-cyan-400'
-                          }`} />
+                          {/* Sonar Ping Ripple around blip */}
+                          <div 
+                            className={`absolute rounded-full animate-ping opacity-60 pointer-events-none ${
+                              isTopHub 
+                                ? 'border border-[#D9B968]' 
+                                : isSelected ? 'border border-purple-400' : 'border border-cyan-400'
+                            }`} 
+                            style={{ width: `${blipSize * 2.4}px`, height: `${blipSize * 2.4}px` }}
+                          />
                           
-                          {/* Dot */}
-                          <div className={`w-3.5 h-3.5 rounded-full border-2 border-[#050508] shadow-lg ${
-                            isSelected ? 'bg-purple-400 scale-125' : 'bg-cyan-400'
-                          }`} />
+                          {/* Core Breathing Blip Node */}
+                          <motion.div 
+                            animate={{ 
+                              scale: isSelected ? [1.25, 1.35, 1.25] : [1, 1.15, 1],
+                              opacity: [0.92, 1, 0.92]
+                            }}
+                            transition={{ 
+                              duration: 2.6, 
+                              repeat: Infinity, 
+                              ease: "easeInOut",
+                              delay: idx * 0.35 
+                            }}
+                            className={`rounded-full border-2 border-[#020408] transition-all cursor-pointer ${
+                              isTopHub 
+                                ? 'bg-gradient-to-r from-amber-400 to-[#D9B968]' 
+                                : isSelected 
+                                  ? 'bg-gradient-to-r from-purple-400 to-indigo-400' 
+                                  : 'bg-gradient-to-r from-cyan-400 to-blue-500'
+                            }`}
+                            style={{ 
+                              width: `${blipSize}px`, 
+                              height: `${blipSize}px`,
+                              boxShadow: isTopHub
+                                ? '0 0 18px 4px rgba(217, 185, 104, 0.85), 0 0 5px #ffffff'
+                                : isSelected
+                                  ? '0 0 16px 3px rgba(168, 85, 247, 0.8), 0 0 4px #ffffff'
+                                  : `0 0 ${12 + (hub.details.onlineCount / 4000) * 6}px 2px rgba(6, 182, 212, 0.8), 0 0 4px #ffffff`
+                            }}
+                          />
 
                           {/* Float Label */}
                           <div className={`absolute bottom-5 px-2 py-1 rounded-lg text-[8px] font-black border backdrop-blur-md flex items-center gap-1 shrink-0 ${
-                            isSelected 
-                              ? 'bg-purple-950/90 border-purple-400 text-white shadow-purple-500/25 shadow-md' 
-                              : 'bg-black/80 border-white/10 text-slate-200'
+                            isTopHub
+                              ? 'bg-[#020408]/90 border-[#D9B968] text-[#D9B968] shadow-[0_0_12px_rgba(217,185,104,0.3)]'
+                              : isSelected 
+                                ? 'bg-purple-950/90 border-purple-400 text-white shadow-purple-500/25 shadow-md' 
+                                : 'bg-black/85 border-cyan-500/30 text-slate-200 shadow-md'
                           }`} style={{ whiteSpace: 'nowrap' }}>
                             <span>{hub.details.flag}</span>
                             <span>{lang === 'ar' ? hub.nameAr.substring(0, 10) : hub.name}</span>
-                            <span className="text-emerald-400">● {hub.details.onlineCount}</span>
+                            <span className={isTopHub ? 'text-amber-300 font-bold' : 'text-emerald-400'}>
+                              ● {hub.details.onlineCount}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1233,42 +1459,42 @@ export default function LumoWorld({
         <div className="lg:col-span-5 flex flex-col gap-6">
           
           {/* Main Space Command Centre */}
-          <div className="glass-panel p-6 rounded-3xl border border-white/10 bg-slate-900/30 dark:bg-[#0a0a12]/75 backdrop-blur-2xl flex flex-col gap-5 relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.35)] hover:shadow-[0_25px_60px_rgba(124,58,237,0.1)] transition-all duration-500">
+          <div className="p-6 rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a0a12]/85 backdrop-blur-2xl flex flex-col gap-5 relative overflow-hidden shadow-xl transition-all duration-500">
             
             {/* Header info */}
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
                 <span className="text-3xl filter drop-shadow-md">{selectedHub.details.flag}</span>
                 <div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-400/20">{lang === 'ar' ? 'الموقع الفلكي المحدد' : 'SELECTED HUB LOCATION'}</span>
-                  <h2 className="text-lg md:text-xl font-black text-white mt-1">
+                  <span className="text-[9px] font-mono uppercase tracking-widest text-cyan-700 dark:text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-400/20">{lang === 'ar' ? 'الموقع الفلكي المحدد' : 'SELECTED HUB LOCATION'}</span>
+                  <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white mt-1">
                     {lang === 'ar' ? selectedHub.details.nameAr : selectedHub.details.name}
                   </h2>
                 </div>
               </div>
 
-              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-black flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-mono font-black flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
                 <span>{selectedHub.details.onlineCount} {lang === 'ar' ? 'متصل' : 'ONLINE'}</span>
               </div>
             </div>
 
             {/* AI EXPLORER INSIGHTS BLOCK */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-950/30 via-slate-900/40 to-blue-950/30 border border-purple-500/30 dark:border-purple-500/20 backdrop-blur-md relative overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] hover:shadow-[0_8px_24px_rgba(168,85,247,0.1)] transition-all duration-300">
-              <div className="absolute top-2 right-2 text-purple-400">
+            <div className="p-4 rounded-2xl bg-purple-50/80 dark:bg-gradient-to-br dark:from-purple-950/30 dark:via-slate-900/40 dark:to-blue-950/30 border border-purple-200 dark:border-purple-500/30 backdrop-blur-md relative overflow-hidden shadow-sm transition-all duration-300">
+              <div className="absolute top-2 right-2 text-purple-500 dark:text-purple-400">
                 <Sparkles className="w-4 h-4 animate-pulse" />
               </div>
-              <h3 className="text-xs font-black text-white flex items-center gap-1.5 uppercase tracking-wider">
+              <h3 className="text-xs font-black text-purple-950 dark:text-white flex items-center gap-1.5 uppercase tracking-wider">
                 <span>🤖 {lang === 'ar' ? 'تقرير مستكشف الذكاء من Lodavia AI' : 'Lodavia AI Hub Assessment'}</span>
               </h3>
               
-              <div className="mt-3 space-y-3 text-xs leading-relaxed text-slate-300">
+              <div className="mt-3 space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
                 <p>
                   {lang === 'ar' ? selectedHub.details.aiTrendingInsights.ar : selectedHub.details.aiTrendingInsights.en}
                 </p>
                 
-                <div className="p-2.5 rounded-xl bg-slate-950/40 dark:bg-black/40 border border-white/5 text-[10px] text-cyan-300 flex items-start gap-2">
-                  <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                <div className="p-2.5 rounded-xl bg-white dark:bg-black/40 border border-purple-200 dark:border-white/5 text-[10px] text-purple-900 dark:text-cyan-300 flex items-start gap-2 shadow-xs">
+                  <Info className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
                   <p>{lang === 'ar' ? selectedHub.details.aiFunFacts.ar : selectedHub.details.aiFunFacts.en}</p>
                 </div>
               </div>
@@ -1279,12 +1505,12 @@ export default function LumoWorld({
               
               {/* LIVE VOICE ROOMS */}
               <div>
-                <h3 className="text-xs font-black text-white uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Mic className="w-4 h-4 text-cyan-400" />
+                    <Mic className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
                     <span>{lang === 'ar' ? 'الغرف الصوتية المباشرة' : 'Live Voice Rooms'}</span>
                   </span>
-                  <span className="text-[9px] font-mono text-slate-400">{selectedHub.details.liveVoiceRooms.length} active</span>
+                  <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400">{selectedHub.details.liveVoiceRooms.length} active</span>
                 </h3>
 
                 <div className="space-y-2">
@@ -1295,19 +1521,19 @@ export default function LumoWorld({
                         key={room.id}
                         className={`p-4 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-4 ${
                           isJoined 
-                            ? 'bg-cyan-500/10 border-cyan-400/60 shadow-[0_0_20px_rgba(39,211,255,0.15)] backdrop-blur-md' 
-                            : 'bg-white/5 dark:bg-black/20 border-white/5 hover:border-white/15 hover:bg-white/10 dark:hover:bg-black/30 hover:shadow-lg'
+                            ? 'bg-cyan-500/10 border-cyan-400/60 shadow-md backdrop-blur-md' 
+                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10'
                         }`}
                       >
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-xs font-bold text-white truncate">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
                             {lang === 'ar' ? room.nameAr : room.name}
                           </h4>
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
-                            <span className="text-[9px] font-mono text-cyan-300 bg-cyan-500/5 px-1.5 py-0.5 rounded border border-cyan-500/10">
+                            <span className="text-[9px] font-mono text-cyan-700 dark:text-cyan-300 bg-cyan-100 dark:bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-300 dark:border-cyan-500/20">
                               🎙️ {room.host}
                             </span>
-                            <span className="text-[9px] font-mono text-slate-400">
+                            <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400">
                               👥 {room.listeners} listening
                             </span>
                           </div>
@@ -1318,7 +1544,7 @@ export default function LumoWorld({
                           className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer ${
                             isJoined 
                               ? 'bg-rose-500 hover:bg-rose-600 text-white' 
-                              : 'bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400'
+                              : 'bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 border border-slate-300 dark:border-white/10 text-cyan-700 dark:text-cyan-400'
                           }`}
                         >
                           {isJoined ? (lang === 'ar' ? 'مغادرة ❌' : 'Leave ❌') : (lang === 'ar' ? 'انضمام 🎙️' : 'Join 🎙️')}
@@ -1331,9 +1557,9 @@ export default function LumoWorld({
 
               {/* LIVE DEVELOPER STREAMS */}
               <div>
-                <h3 className="text-xs font-black text-white uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Video className="w-4 h-4 text-purple-400" />
+                    <Video className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     <span>{lang === 'ar' ? 'البث التقني المباشر' : 'Live Dev Streams'}</span>
                   </span>
                 </h3>
@@ -1346,17 +1572,17 @@ export default function LumoWorld({
                         key={stream.id}
                         className={`p-4 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-4 ${
                           isSpectating 
-                            ? 'bg-purple-500/10 border-purple-400/60 shadow-[0_0_20px_rgba(168,85,247,0.15)] backdrop-blur-md' 
-                            : 'bg-white/5 dark:bg-black/20 border-white/5 hover:border-white/15 hover:bg-white/10 dark:hover:bg-black/30 hover:shadow-lg'
+                            ? 'bg-purple-500/10 border-purple-400/60 shadow-md backdrop-blur-md' 
+                            : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/15 hover:bg-slate-100 dark:hover:bg-white/10'
                         }`}
                       >
                         <div className="flex-1 min-w-0">
                           <span className="text-[8px] font-mono text-rose-500 bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded-md font-black">LIVE</span>
-                          <h4 className="text-xs font-bold text-white truncate mt-1">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate mt-1">
                             {lang === 'ar' ? stream.titleAr : stream.title}
                           </h4>
-                          <p className="text-[9px] text-slate-400 mt-1">
-                            {stream.streamer} • <span className="text-purple-300 font-mono">{stream.viewers} spectating</span>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1">
+                            {stream.streamer} • <span className="text-purple-600 dark:text-purple-300 font-mono">{stream.viewers} spectating</span>
                           </p>
                         </div>
 
@@ -1377,9 +1603,9 @@ export default function LumoWorld({
 
               {/* CONFERENCES & EVENTS */}
               <div>
-                <h3 className="text-xs font-black text-white uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-amber-400" />
+                    <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                     <span>{lang === 'ar' ? 'الفعاليات والبطولات' : 'Events & Tournaments'}</span>
                   </span>
                 </h3>
@@ -1390,16 +1616,16 @@ export default function LumoWorld({
                     return (
                       <div 
                         key={event.id}
-                        className="p-4 rounded-2xl border bg-white/5 dark:bg-black/20 border-white/5 hover:border-white/15 hover:bg-white/10 dark:hover:bg-black/30 transition-all duration-300 hover:shadow-lg flex flex-col gap-2.5"
+                        className="p-4 rounded-2xl border bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/15 hover:bg-slate-100 dark:hover:bg-black/30 transition-all duration-300 shadow-xs flex flex-col gap-2.5"
                       >
                         <div className="flex justify-between items-start">
-                          <span className="text-[8px] font-mono px-2 py-0.5 rounded-md border border-amber-400/20 bg-amber-400/5 text-amber-400 uppercase font-black">
+                          <span className="text-[8px] font-mono px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-400/20 bg-amber-100 dark:bg-amber-400/5 text-amber-800 dark:text-amber-400 uppercase font-black">
                             {lang === 'ar' ? event.typeLabelAr : event.typeLabel}
                           </span>
-                          <span className="text-[9px] font-mono text-slate-400">{event.date} @ {event.time}</span>
+                          <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400">{event.date} @ {event.time}</span>
                         </div>
 
-                        <h4 className="text-xs font-bold text-white leading-relaxed">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-relaxed">
                           {lang === 'ar' ? event.typeLabelAr : event.title}
                         </h4>
 
@@ -1409,7 +1635,7 @@ export default function LumoWorld({
                             className={`px-4 py-1.5 rounded-xl text-[9px] font-black transition-all cursor-pointer ${
                               hasJoined 
                                 ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/10' 
-                                : 'bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200'
+                                : 'bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 border border-slate-300 dark:border-white/10 text-slate-800 dark:text-slate-200'
                             }`}
                           >
                             {hasJoined ? (lang === 'ar' ? 'مسجل ✓' : 'Registered ✓') : (lang === 'ar' ? 'تسجيل حضور' : 'Register / Join')}
@@ -1423,9 +1649,9 @@ export default function LumoWorld({
 
               {/* FRIEND DISCOVERY & NETWORKING */}
               <div>
-                <h3 className="text-xs font-black text-white uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2.5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-emerald-400" />
+                    <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>{lang === 'ar' ? 'اكتشاف المبدعين والشركاء' : 'Local Builders Discovery'}</span>
                   </span>
                 </h3>
@@ -1436,20 +1662,20 @@ export default function LumoWorld({
                     return (
                       <div 
                         key={idx}
-                        className="p-4 rounded-2xl border bg-white/5 dark:bg-[#050508]/40 border-white/5 hover:border-white/15 hover:bg-white/10 dark:hover:bg-black/30 transition-all duration-300 hover:shadow-lg flex items-center justify-between gap-4"
+                        className="p-4 rounded-2xl border bg-slate-50 dark:bg-[#050508]/40 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/15 hover:bg-slate-100 dark:hover:bg-black/30 transition-all duration-300 shadow-xs flex items-center justify-between gap-4"
                       >
                         <div className="flex items-center gap-3">
                           <div className="relative">
-                            <img src={p.avatar} alt={p.name} className="w-10 h-10 rounded-full object-cover border border-white/10" />
-                            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#050508] animate-pulse" />
+                            <img src={p.avatar} alt={p.name} className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-white/10" />
+                            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 dark:bg-emerald-400 border-2 border-white dark:border-[#050508] animate-pulse" />
                           </div>
                           <div>
-                            <h4 className="text-xs font-bold text-white flex items-center gap-1">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
                               <span>{lang === 'ar' ? p.nameAr : p.name}</span>
                             </h4>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {p.interests.slice(0, 2).map((interest: string, i: number) => (
-                                <span key={i} className="text-[8px] font-mono text-slate-400 bg-white/5 px-1 rounded">
+                                <span key={i} className="text-[8px] font-mono text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-white/5 px-1 rounded">
                                   #{interest}
                                 </span>
                               ))}
@@ -1462,7 +1688,7 @@ export default function LumoWorld({
                           className={`px-3 py-1.5 rounded-xl text-[9px] font-black transition-all cursor-pointer ${
                             isConnected 
                               ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400' 
-                              : 'bg-white/5 hover:bg-white/10 border border-white/10 text-cyan-400'
+                              : 'bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 border border-slate-300 dark:border-white/10 text-cyan-700 dark:text-cyan-400'
                           }`}
                         >
                           {isConnected ? (lang === 'ar' ? 'متصل ✓' : 'Connected ✓') : (lang === 'ar' ? 'اتصال' : 'Connect')}
@@ -1480,9 +1706,10 @@ export default function LumoWorld({
         </div>
 
       </div>
+      )}
 
       {/* FOOTER AD BANNER DECORATION */}
-      <div className="mt-8 rounded-3xl p-6 border border-cyan-500/20 bg-gradient-to-r from-cyan-950/20 via-slate-900/20 to-purple-950/20 text-cyan-200 text-center text-xs flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_10px_35px_rgba(39,211,255,0.05)] backdrop-blur-md">
+      <div className="mt-8 rounded-3xl p-6 border border-cyan-500/40 bg-gradient-to-r from-slate-950 via-purple-950 to-slate-950 text-white text-center text-xs flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
         <p className="leading-relaxed">
           🪐 <strong>{lang === 'ar' ? 'خارطة النشاط الموحدة:' : 'Unified Cosmic Ledger:'}</strong> {lang === 'ar' ? 'تتحرك النجوم في مدارات مثالية بناء على التعلم والمطابقة. كل مشروع ومساحة صوتية تنشئها تضيف جاذبية فلكية لحسابك الشخصي.' : 'Lodavia World maps real-time user connections globally. Host active spaces, voice sessions or public compiler feeds to gain cosmic gravitation index.'}
         </p>

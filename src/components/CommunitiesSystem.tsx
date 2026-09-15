@@ -31,7 +31,7 @@ import CommunityMembers from "./communities/CommunityMembers";
 interface CommunitiesSystemProps {
   currentUser: AppUser;
   setCurrentUser: React.Dispatch<React.SetStateAction<AppUser>>;
-  lang: "ar" | "en";
+  lang: string;
   communities: CommunityItem[];
   setCommunities: React.Dispatch<React.SetStateAction<CommunityItem[]>>;
   activeCommunity: CommunityItem | null;

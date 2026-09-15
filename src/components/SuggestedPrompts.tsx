@@ -2,7 +2,7 @@ import React from "react";
 import { Sparkles, Terminal, BookOpen, Compass, RotateCcw, TrendingUp, Zap } from "lucide-react";
 
 interface SuggestedPromptsProps {
-  lang: "ar" | "en";
+  lang: string;
   onSelectPrompt: (prompt: string) => void;
   recentPrompts: string[];
   onClearRecent: () => void;
@@ -42,6 +42,15 @@ export default function SuggestedPrompts({
         ]
       },
       {
+        category: "Projects & Business",
+        icon: <Zap className="w-4 h-4 text-amber-400" />,
+        prompts: [
+          "Evaluate my new project idea with Lodavia AI Jury",
+          "How to calculate customer acquisition cost CAC and LTV?",
+          "Formulate an optimal go-to-market strategy for a SaaS startup"
+        ]
+      },
+      {
         category: "Brainstorming & Science",
         icon: <Compass className="w-4 h-4 text-cyan-400" />,
         prompts: [
@@ -66,6 +75,15 @@ export default function SuggestedPrompts({
         prompts: [
           "اكتب قصة خيال علمي قصيرة حول تمدد الزمن بجانب ثقب أسود عملاق",
           "صغ منشوراً ملهماً لـ لودافيولينكدن حول البرمجيات المستوحاة من حركة النجوم"
+        ]
+      },
+      {
+        category: "المشاريع ولجنة التحكيم",
+        icon: <Zap className="w-4 h-4 text-amber-400" />,
+        prompts: [
+          "⚖️ أريد تقييم مشروعي الجديد عبر لجنة Lodavia AI",
+          "كيف أصيغ نموذج العمل التجاري ودراسة الجدوى لمشروعي؟",
+          "ما هي أفضل استراتيجية لاكتساب أول 1,000 مستخدم نشط؟"
         ]
       },
       {
@@ -107,9 +125,9 @@ export default function SuggestedPrompts({
           {activeStarters.map((cat, i) => (
             <div
               key={i}
-              className="glass-panel p-4 rounded-2xl border border-white/5 bg-slate-900/20 space-y-2.5 hover:border-purple-500/20 transition-all duration-300"
+              className="p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/20 space-y-2.5 hover:border-sky-400 dark:hover:border-purple-500/30 transition-all duration-300 shadow-sm"
             >
-              <h5 className="text-[11px] font-black text-white flex items-center gap-2 select-none">
+              <h5 className="text-[11px] font-black text-slate-900 dark:text-white flex items-center gap-2 select-none">
                 {cat.icon}
                 <span>{cat.category}</span>
               </h5>
@@ -118,7 +136,7 @@ export default function SuggestedPrompts({
                   <button
                     key={j}
                     onClick={() => handleSelect(p)}
-                    className="w-full text-left font-sans text-xs text-slate-300 hover:text-white bg-black/30 hover:bg-purple-600/15 border border-white/5 hover:border-purple-500/30 p-2.5 rounded-xl transition-all duration-200 cursor-pointer block truncate"
+                    className="w-full text-left font-sans text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-black/30 hover:bg-sky-50 dark:hover:bg-purple-600/15 border border-slate-200 dark:border-white/5 hover:border-sky-300 dark:hover:border-purple-500/30 p-2.5 rounded-xl transition-all duration-200 cursor-pointer block truncate"
                   >
                     {p}
                   </button>
@@ -128,9 +146,9 @@ export default function SuggestedPrompts({
           ))}
 
           {/* Trending Bento Card */}
-          <div className="glass-panel p-4 rounded-2xl border border-white/5 bg-slate-900/20 space-y-2.5 hover:border-cyan-500/20 transition-all duration-300">
-            <h5 className="text-[11px] font-black text-white flex items-center gap-2 select-none">
-              <TrendingUp className="w-4 h-4 text-cyan-400 animate-pulse" />
+          <div className="p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900/20 space-y-2.5 hover:border-cyan-500/30 transition-all duration-300 shadow-sm">
+            <h5 className="text-[11px] font-black text-slate-900 dark:text-white flex items-center gap-2 select-none">
+              <TrendingUp className="w-4 h-4 text-sky-500 dark:text-cyan-400 animate-pulse" />
               <span>{lang === "ar" ? "الوسوم والأسئلة الشائعة" : "Trending Cosmic Queries"}</span>
             </h5>
             <div className="space-y-2">
@@ -138,7 +156,7 @@ export default function SuggestedPrompts({
                 <button
                   key={j}
                   onClick={() => handleSelect(p)}
-                  className="w-full text-left font-sans text-xs text-slate-300 hover:text-white bg-black/30 hover:bg-cyan-600/15 border border-white/5 hover:border-cyan-500/30 p-2.5 rounded-xl transition-all duration-200 cursor-pointer block truncate"
+                  className="w-full text-left font-sans text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-black/30 hover:bg-sky-50 dark:hover:bg-cyan-600/15 border border-slate-200 dark:border-white/5 hover:border-sky-300 dark:hover:border-cyan-500/30 p-2.5 rounded-xl transition-all duration-200 cursor-pointer block truncate"
                 >
                   {p}
                 </button>
@@ -152,13 +170,13 @@ export default function SuggestedPrompts({
       {recentPrompts && recentPrompts.length > 0 && (
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1.5 font-mono select-none">
-              <RotateCcw className="w-3.5 h-3.5 text-purple-400" />
+            <h4 className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-widest flex items-center gap-1.5 font-mono select-none">
+              <RotateCcw className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
               <span>{lang === "ar" ? "عمليات بحث وموجهات حديثة" : "Recently Used Prompts"}</span>
             </h4>
             <button
               onClick={() => { playSynthSound(150, "sawtooth", 0.08); onClearRecent(); }}
-              className="text-[9px] font-bold text-slate-500 hover:text-red-400 transition-colors cursor-pointer uppercase tracking-wider font-mono"
+              className="text-[9px] font-bold text-slate-500 hover:text-red-500 transition-colors cursor-pointer uppercase tracking-wider font-mono"
             >
               {lang === "ar" ? "مسح السجل" : "Clear History"}
             </button>
@@ -168,7 +186,7 @@ export default function SuggestedPrompts({
               <button
                 key={idx}
                 onClick={() => handleSelect(p)}
-                className="max-w-xs truncate px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-purple-500/20 text-slate-300 hover:text-white text-[11px] rounded-lg transition-all cursor-pointer font-sans"
+                className="max-w-xs truncate px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 hover:border-sky-300 dark:hover:border-purple-500/20 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-[11px] rounded-lg transition-all cursor-pointer font-sans"
               >
                 {p}
               </button>

@@ -33,13 +33,12 @@ export const postService = {
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as Post[];
       } catch (err) {
-        console.warn("Firestore post fetching error, using fallback helper:", err);
-        try {
-          handleFirestoreError(err, OperationType.LIST, postsColPath);
-        } catch (wrappedErr) {
-          console.error("Firestore Error Wrapped:", wrappedErr);
+        console.warn("Firestore post fetching offline/permission fallback:", err);
+        const posts = storage.load<Post[]>('lumo_posts', initialHomePosts);
+        if (communityId) {
+          return posts.filter((p: any) => p.communityId === communityId);
         }
-        return storage.load<Post[]>('lumo_posts', initialHomePosts);
+        return posts;
       }
     } else {
       const posts = storage.load<Post[]>('lumo_posts', initialHomePosts);
@@ -50,13 +49,12 @@ export const postService = {
     }
   },
 
-  createPost: async (post: Post, userId: string): Promise<void> => {
+  createPost: async (post: Post): Promise<void> => {
     if (isFirebaseConfigured && db) {
       const path = `posts/${post.id}`;
       try {
         await setDoc(doc(db, 'posts', post.id), {
           ...post,
-          authorId: userId,
           timestamp: new Date().toISOString()
         });
       } catch (error) {
