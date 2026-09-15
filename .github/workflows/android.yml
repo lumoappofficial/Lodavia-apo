@@ -23,7 +23,7 @@ jobs:
           node-version: 20
 
       - name: Install Bun
-        uses: bun-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
