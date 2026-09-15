@@ -17,6 +17,9 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -35,6 +38,11 @@ jobs:
 
       - name: Synchronize Capacitor Project
         run: npx cap sync android
+
+      - name: Regenerate Gradle Wrapper
+        run: |
+          cd android
+          gradle wrapper
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
