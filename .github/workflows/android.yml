@@ -17,7 +17,7 @@ jobs:
       - name: Set up Java JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
       - name: Set up Node.js
@@ -41,24 +41,28 @@ jobs:
           npx cap sync android
           rm -f android/app/src/main/assets/public/server.cjs*
 
-      - name: Set up Official Gradle
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.13'
+          gradle-version: '8.11.1'
 
       - name: Build Android Release APK
         run: |
           cd android
-          echo "Removing any corrupted legacy wrapper jar..."
-          rm -rf gradle/wrapper/gradle-wrapper.jar
-          echo "Building Android APK directly using Gradle 8.13..."
+          echo "Building Android Release APK with Gradle 8.11.1..."
           gradle assembleRelease --no-daemon --stacktrace
 
       - name: Upload Android Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: android/app/build/outputs/apk/release/*.apk
+          path: |
+            android/app/build/outputs/apk/release/*.apk
+            android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 7
           overwrite: true
