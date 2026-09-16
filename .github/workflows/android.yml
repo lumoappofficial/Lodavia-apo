@@ -14,11 +14,11 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Set up Java JDK 17
+      - name: Set up Java JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -41,19 +41,20 @@ jobs:
           npx cap sync android
           rm -f android/app/src/main/assets/public/server.cjs*
 
-      - name: Accept Android SDK Licenses
+      - name: Accept Android SDK Licenses & Install Platform
         run: |
           yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.11.1'
+          gradle-version: '8.13'
 
       - name: Build Android Release APK
         run: |
           cd android
-          echo "Building Android Release APK with Gradle 8.11.1..."
+          echo "Building Android Release APK with Gradle 8.13 and Java 21..."
           gradle assembleRelease --no-daemon --stacktrace
 
       - name: Upload Android Release APK Artifact
