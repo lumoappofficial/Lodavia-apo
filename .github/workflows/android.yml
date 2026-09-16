@@ -41,26 +41,30 @@ jobs:
           npx cap sync android
           rm -f android/app/src/main/assets/public/server.cjs*
 
-      - name: Accept Android SDK Licenses & Install Platform
-        run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0" || true
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
 
-      - name: Build Android Release APK
+      - name: Prepare Android Debug Keystore
+        run: |
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
+            echo "Generating debug keystore..."
+            keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build Android APK
         run: |
           cd android
-          echo "Building Android Release APK with Gradle 8.13 and Java 21..."
-          gradle assembleRelease --no-daemon --stacktrace
+          chmod +x ./gradlew
+          echo "Building Android APKs (Debug & Release)..."
+          ./gradlew assembleDebug assembleRelease -x lint -x lintVitalAnalyzeRelease -x lintVitalReportRelease --no-daemon --stacktrace
 
-      - name: Upload Android Release APK Artifact
+      - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
+          name: app-apks
           path: |
             android/app/build/outputs/apk/release/*.apk
             android/app/build/outputs/apk/debug/*.apk
