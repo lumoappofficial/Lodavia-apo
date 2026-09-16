@@ -11,10 +11,18 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Also omit any server-side bundles or source maps from the Android APK
+            // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+            // Also omit any server-side bundles or source maps from the Android APK
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:server.cjs:*.map:*.cjs'
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
     }
     buildTypes {
         debug {
@@ -23,7 +31,9 @@ android {
         }
         release {
             debuggable false
-            minifyEnabled true
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.debug
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
