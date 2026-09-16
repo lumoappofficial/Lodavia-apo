@@ -57,6 +57,8 @@ jobs:
       - name: Build Android APK
         run: |
           cd android
+          rm -f gradle/wrapper/gradle-wrapper.jar
+          gradle wrapper --gradle-version 8.13 || true
           echo "Building Android APKs with installed Gradle CLI..."
           gradle assembleDebug assembleRelease -x lint -x lintVitalAnalyzeRelease -x lintVitalReportRelease --no-daemon --stacktrace
 
