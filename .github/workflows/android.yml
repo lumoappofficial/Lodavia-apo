@@ -57,17 +57,15 @@ jobs:
       - name: Build Android APK
         run: |
           cd android
-          chmod +x ./gradlew
-          echo "Building Android APKs (Debug & Release)..."
-          ./gradlew assembleDebug assembleRelease -x lint -x lintVitalAnalyzeRelease -x lintVitalReportRelease --no-daemon --stacktrace
+          echo "Building Android APKs with installed Gradle CLI..."
+          gradle assembleDebug assembleRelease -x lint -x lintVitalAnalyzeRelease -x lintVitalReportRelease --no-daemon --stacktrace
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-apks
           path: |
-            android/app/build/outputs/apk/release/*.apk
-            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 7
           overwrite: true
