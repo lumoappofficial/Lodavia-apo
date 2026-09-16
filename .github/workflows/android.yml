@@ -39,22 +39,19 @@ jobs:
           npx cap sync android
           rm -f android/app/src/main/assets/public/server.cjs*
 
-      - name: Ensure Healthy Gradle Wrapper
-        run: |
-          echo "Checking Gradle Wrapper integrity..."
-          if ! unzip -t android/gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
-            echo "Corrupted gradle-wrapper.jar detected! Repairing with official clean wrapper..."
-            curl -sLo android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
-          fi
-          chmod +x android/gradlew
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
 
       - name: Build Android Release APK
         run: |
           cd android
+          echo "Regenerating official Gradle wrapper from installed Gradle..."
+          gradle wrapper --gradle-version 8.13
           chmod +x gradlew
-          echo "Cleaning Gradle caches to prevent corrupted jar issues..."
-          rm -rf ~/.gradle/caches/
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          echo "Building Android Release APK..."
+          ./gradlew assembleRelease --no-daemon --stacktrace || gradle assembleRelease --no-daemon --stacktrace
 
       - name: Upload Android Release APK Artifact
         uses: actions/upload-artifact@v4
