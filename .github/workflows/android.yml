@@ -2,6 +2,8 @@ name: Build Android Release APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main, master ]
 
 jobs:
   build:
@@ -39,7 +41,7 @@ jobs:
           npx cap sync android
           rm -f android/app/src/main/assets/public/server.cjs*
 
-      - name: Set up Gradle
+      - name: Set up Official Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
@@ -47,11 +49,10 @@ jobs:
       - name: Build Android Release APK
         run: |
           cd android
-          echo "Regenerating official Gradle wrapper from installed Gradle..."
-          gradle wrapper --gradle-version 8.13
-          chmod +x gradlew
-          echo "Building Android Release APK..."
-          ./gradlew assembleRelease --no-daemon --stacktrace || gradle assembleRelease --no-daemon --stacktrace
+          echo "Removing any corrupted legacy wrapper jar..."
+          rm -rf gradle/wrapper/gradle-wrapper.jar
+          echo "Building Android APK directly using Gradle 8.13..."
+          gradle assembleRelease --no-daemon --stacktrace
 
       - name: Upload Android Release APK Artifact
         uses: actions/upload-artifact@v4
