@@ -8,6 +8,8 @@ import {
   createUserWithEmailAndPassword, 
   signOut, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider, 
   OAuthProvider,
   signInAnonymously,
@@ -30,6 +32,52 @@ import { AppUser } from '../types';
 import { initialUser } from '../data';
 import { storage } from '../utils/storage';
 import { handleFirestoreError, OperationType } from '../utils/firestore-error';
+
+export const isMobileBrowser = (): boolean => {
+  if (typeof window === 'undefined' || !window.navigator) return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent);
+};
+
+const syncOAuthUser = async (fbUser: any, providerType: 'google' | 'apple'): Promise<AppUser> => {
+  let userDoc;
+  try {
+    userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `users/${fbUser.uid}`);
+  }
+
+  if (userDoc && userDoc.exists()) {
+    return userDoc.data() as AppUser;
+  } else {
+    const isGoogle = providerType === 'google';
+    const newUser: AppUser = {
+      id: fbUser.uid,
+      name: fbUser.displayName || (isGoogle ? 'مستكشف Lodavia' : 'مستخدم آبل الكوني'),
+      email: fbUser.email || '',
+      avatar: fbUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+      coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
+      bio: isGoogle ? 'تسجيل دخول عبر جوجل! مرحباً بك 🌌' : 'مسجل عبر منصة آبل العريقة! 🪐',
+      country: 'المملكة العربية السعودية',
+      language: 'العربية',
+      interests: isGoogle ? ['برمجة', 'ذكاء اصطناعي'] : ['تصميم', 'برمجة'],
+      achievements: isGoogle 
+        ? [{ id: 'ach_google', title: 'الربط الرقمي', description: 'ربط الحساب بجوجل بنجاح', icon: '🌐' }]
+        : [{ id: 'ach_apple', title: 'مبدع التفاحة الكونية', description: 'ربط حساب آبل بنجاح', icon: '🍎' }],
+      joinedCommunities: ['comm_prog'],
+      enrolledCourses: [],
+      followersCount: 1,
+      followingCount: isGoogle ? 0 : 1,
+      points: 150,
+      purchasedItems: []
+    };
+    try {
+      await setDoc(doc(db, 'users', fbUser.uid), newUser);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, `users/${fbUser.uid}`);
+    }
+    return newUser;
+  }
+};
 
 export const authService = {
   // Email/Password Log In
@@ -175,48 +223,16 @@ export const authService = {
   },
 
   // Google Sign In
-  signInWithGoogle: async (): Promise<AppUser> => {
+  signInWithGoogle: async (): Promise<AppUser | void> => {
     if (isFirebaseConfigured && auth) {
       try {
         const provider = new GoogleAuthProvider();
+        if (isMobileBrowser()) {
+          await signInWithRedirect(auth, provider);
+          return;
+        }
         const result = await signInWithPopup(auth, provider);
-        const fbUser = result.user;
-        
-        let userDoc;
-        try {
-          userDoc = await getDoc(doc(db, 'users', fbUser.uid));
-        } catch (error) {
-          handleFirestoreError(error, OperationType.GET, `users/${fbUser.uid}`);
-        }
-
-        if (userDoc.exists()) {
-          return userDoc.data() as AppUser;
-        } else {
-          const newUser: AppUser = {
-            id: fbUser.uid,
-            name: fbUser.displayName || 'مستكشف Lodavia',
-            email: fbUser.email || '',
-            avatar: fbUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-            coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
-            bio: 'تسجيل دخول عبر جوجل! مرحباً بك 🌌',
-            country: 'المملكة العربية السعودية',
-            language: 'العربية',
-            interests: ['برمجة', 'ذكاء اصطناعي'],
-            achievements: [{ id: 'ach_google', title: 'الربط الرقمي', description: 'ربط الحساب بجوجل بنجاح', icon: '🌐' }],
-            joinedCommunities: ['comm_prog'],
-            enrolledCourses: [],
-            followersCount: 1,
-            followingCount: 0,
-            points: 150,
-            purchasedItems: []
-          };
-          try {
-            await setDoc(doc(db, 'users', fbUser.uid), newUser);
-          } catch (error) {
-            handleFirestoreError(error, OperationType.CREATE, `users/${fbUser.uid}`);
-          }
-          return newUser;
-        }
+        return await syncOAuthUser(result.user, 'google');
       } catch (err: any) {
         throw new Error(err.message || "خطأ في تسجيل الدخول بـ Google.");
       }
@@ -249,48 +265,16 @@ export const authService = {
   },
 
   // Apple Sign In
-  signInWithApple: async (): Promise<AppUser> => {
+  signInWithApple: async (): Promise<AppUser | void> => {
     if (isFirebaseConfigured && auth) {
       try {
         const provider = new OAuthProvider('apple.com');
+        if (isMobileBrowser()) {
+          await signInWithRedirect(auth, provider);
+          return;
+        }
         const result = await signInWithPopup(auth, provider);
-        const fbUser = result.user;
-        
-        let userDoc;
-        try {
-          userDoc = await getDoc(doc(db, 'users', fbUser.uid));
-        } catch (error) {
-          handleFirestoreError(error, OperationType.GET, `users/${fbUser.uid}`);
-        }
-
-        if (userDoc.exists()) {
-          return userDoc.data() as AppUser;
-        } else {
-          const newUser: AppUser = {
-            id: fbUser.uid,
-            name: fbUser.displayName || 'مستخدم آبل الكوني',
-            email: fbUser.email || '',
-            avatar: fbUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-            coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
-            bio: 'مسجل عبر منصة آبل العريقة! 🪐',
-            country: 'المملكة العربية السعودية',
-            language: 'العربية',
-            interests: ['تصميم', 'برمجة'],
-            achievements: [{ id: 'ach_apple', title: 'مبدع التفاحة الكونية', description: 'ربط حساب آبل بنجاح', icon: '🍎' }],
-            joinedCommunities: ['comm_prog'],
-            enrolledCourses: [],
-            followersCount: 1,
-            followingCount: 1,
-            points: 150,
-            purchasedItems: []
-          };
-          try {
-            await setDoc(doc(db, 'users', fbUser.uid), newUser);
-          } catch (error) {
-            handleFirestoreError(error, OperationType.CREATE, `users/${fbUser.uid}`);
-          }
-          return newUser;
-        }
+        return await syncOAuthUser(result.user, 'apple');
       } catch (err: any) {
         throw new Error(err.message || "خطأ في تسجيل الدخول بـ Apple.");
       }
@@ -319,6 +303,22 @@ export const authService = {
       users[mockAppleId] = newUser;
       storage.save('lodavia_users', users);
       return newUser;
+    }
+  },
+
+  // Complete Pending Redirect Sign-In (For Mobile Browser Return Flow)
+  completeRedirectSignIn: async (): Promise<AppUser | null> => {
+    if (!isFirebaseConfigured || !auth) return null;
+    try {
+      const result = await getRedirectResult(auth);
+      if (!result || !result.user) {
+        return null;
+      }
+      const providerId = result.providerId || result.user.providerData?.[0]?.providerId || '';
+      const providerType = providerId.includes('apple') ? 'apple' : 'google';
+      return await syncOAuthUser(result.user, providerType);
+    } catch (err: any) {
+      throw new Error(err.message || "خطأ أثناء إكمال تسجيل الدخول عبر التوجيه.");
     }
   },
 

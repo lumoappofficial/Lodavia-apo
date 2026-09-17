@@ -37,7 +37,8 @@ import {
   getLanguageInfo,
   isRtlLanguage,
   SUPPORTED_LANGUAGES,
-  DEFAULT_LANGUAGE
+  DEFAULT_LANGUAGE,
+  tText
 } from '../locales';
 
 interface AppContextType {
@@ -56,6 +57,7 @@ interface AppContextType {
   lang: SupportedLanguage;
   setLang: (lang: SupportedLanguage) => void;
   t: (key: string, params?: Record<string, string | number>, fallback?: string) => string;
+  tText: (arText: string, enText: string, frText?: string, esText?: string, deText?: string) => string;
   isRtl: boolean;
   dir: 'rtl' | 'ltr';
   supportedLanguages: LanguageInfo[];
@@ -198,6 +200,10 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
 
   const t = (key: string, params?: Record<string, string | number>, fallback?: string) => {
     return translate(key, lang, params, fallback);
+  };
+
+  const boundTText = (arText: string, enText: string, frText?: string, esText?: string, deText?: string) => {
+    return tText(arText, enText, lang, frText, esText, deText);
   };
 
   const formatDate = (date: Date | string | number, options?: Intl.DateTimeFormatOptions) => {
@@ -786,6 +792,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       isDataLoading,
       lang, setLang,
       t,
+      tText: boundTText,
       isRtl,
       dir,
       supportedLanguages: SUPPORTED_LANGUAGES,

@@ -21,6 +21,7 @@ import {
   Camera, 
   Brain,
   Tv,
+  Film,
   Settings,
   ShoppingBag,
   Gamepad2,
@@ -156,7 +157,8 @@ export default function DashboardLayout() {
     handlePurchaseItem,
     handleCreateSubmit,
     supportedLanguages,
-    t
+    t,
+    tText
   } = useApp();
 
   const navigate = useNavigate();
@@ -317,12 +319,12 @@ export default function DashboardLayout() {
           {/* Core Navigation Links - Unified Top 5 Order & Visuals */}
           <nav className="flex flex-col gap-1">
             {[
-              { id: 'home', labelAr: 'الرئيسية', labelEn: 'Home', icon: Home, path: '/home' },
-              { id: 'communities', labelAr: 'المجتمعات', labelEn: 'Communities', icon: Users, path: '/communities' },
-              { id: 'profile', labelAr: 'الملف الشخصي', labelEn: 'My Profile', icon: User, path: '/profile' },
-              { id: 'lumo', labelAr: 'Lumo راي والرفيق 🚀', labelEn: 'Lumo & Ray 🚀', icon: Sparkles, path: '/lumo', lumoGlow: true },
-              { id: 'messages', labelAr: 'الرسائل', labelEn: 'Messages', icon: MessageSquare, path: '/messages', badge: '2' },
-              { id: 'notifications', labelAr: 'الإشعارات', labelEn: 'Notifications', icon: Bell, path: '/notifications' },
+              { id: 'home', label: tText('الرئيسية', 'Home'), icon: Home, path: '/home' },
+              { id: 'communities', label: tText('المجتمعات', 'Communities'), icon: Users, path: '/communities' },
+              { id: 'profile', label: tText('الملف الشخصي', 'My Profile'), icon: User, path: '/profile' },
+              { id: 'lumo', label: tText('راي والرفيق لومو 🚀', 'Ray & Lumo 🚀'), icon: Sparkles, path: '/lumo', lumoGlow: true },
+              { id: 'messages', label: tText('الرسائل', 'Messages'), icon: MessageSquare, path: '/messages', badge: '2' },
+              { id: 'notifications', label: tText('الإشعارات', 'Notifications'), icon: Bell, path: '/notifications' },
             ].map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -333,7 +335,7 @@ export default function DashboardLayout() {
                     playSynthSound(500, 'sine', 0.05);
                     navigate(item.path);
                   }}
-                  title={isRtl ? item.labelAr : item.labelEn}
+                  title={item.label}
                   className={`flex items-center gap-3 py-2.5 px-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
                     item.lumoGlow
                       ? (isActive
@@ -360,7 +362,7 @@ export default function DashboardLayout() {
                   </div>
 
                   {!sidebarCollapsed && (
-                    <span className="truncate">{isRtl ? item.labelAr : item.labelEn}</span>
+                    <span className="truncate">{item.label}</span>
                   )}
                 </button>
               );
@@ -378,24 +380,24 @@ export default function DashboardLayout() {
             }`}
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            {!sidebarCollapsed && <span>{isRtl ? 'إنشاء محتوى 🚀' : 'Create 🚀'}</span>}
+            {!sidebarCollapsed && <span>{tText('إنشاء محتوى 🚀', 'Create 🚀')}</span>}
           </button>
 
           {/* Media & Content Hub */}
           {!sidebarCollapsed && (
             <div className="flex flex-col gap-0.5 pt-3 border-t border-slate-200/60 dark:border-sky-500/15">
               <span className="text-[10px] font-black uppercase text-sky-600 dark:text-sky-400 tracking-wider px-3 mb-1">
-                {isRtl ? 'المحتوى والإعلام' : 'Media & Creation'}
+                {tText('المحتوى والإعلام', 'Media & Creation')}
               </span>
 
               {[
-                { path: '/explore', labelAr: 'استكشاف الكون 🧭', labelEn: 'Explore Universe 🧭', icon: Compass },
-                { path: '/voice-rooms', labelAr: 'الغرف الصوتية 🎙️', labelEn: 'Voice Rooms 🎙️', icon: Mic },
-                { path: '/audio', labelAr: 'لودافيا للصوتيات 🎵', labelEn: 'Lodavia Audio 🎵', icon: Headphones },
-                { path: '/media', labelAr: 'مسرح المرئيات 🎬', labelEn: 'Media Feed 🎬', icon: Tv },
-                { path: '/projects', labelAr: 'استوديو المشاريع 🚀', labelEn: 'Projects Hub 🚀', icon: Rocket },
-                { path: '/camera', labelAr: 'استوديو الكاميرا 📸', labelEn: 'Camera Studio 📸', icon: Camera },
-                { path: '/lodavia-now', labelAr: 'ماذا يحدث الآن 🔴', labelEn: 'Lodavia Now 🔴', icon: Radio },
+                { path: '/explore', label: tText('استكشاف الكون 🧭', 'Explore Universe 🧭'), icon: Compass },
+                { path: '/voice-rooms', label: tText('الغرف الصوتية 🎙️', 'Voice Rooms 🎙️'), icon: Mic },
+                { path: '/audio', label: tText('صوتيات لودافيا 🎵', 'Lodavia Audio 🎵'), icon: Headphones },
+                { path: '/media', label: tText('المرئيات 🎬', 'Media Feed 🎬'), icon: Tv },
+                { path: '/projects', label: tText('المشاريع 🚀', 'Projects Hub 🚀'), icon: Rocket },
+                { path: '/camera', label: tText('الكاميرا 📸', 'Camera Studio 📸'), icon: Camera },
+                { path: '/lodavia-now', label: tText('ماذا يحدث الآن 🔴', 'Lodavia Now 🔴'), icon: Radio },
               ].map((sub, i) => {
                 const SubIcon = sub.icon;
                 const isSubActive = location.pathname === sub.path;
@@ -413,7 +415,7 @@ export default function DashboardLayout() {
                     }`}
                   >
                     <SubIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{isRtl ? sub.labelAr : sub.labelEn}</span>
+                    <span className="truncate">{sub.label}</span>
                   </button>
                 );
               })}
@@ -424,16 +426,16 @@ export default function DashboardLayout() {
           {!sidebarCollapsed && (
             <div className="flex flex-col gap-0.5 pt-3 border-t border-slate-200/60 dark:border-sky-500/15">
               <span className="text-[10px] font-black uppercase text-[#D9B968] tracking-wider px-3 mb-1">
-                {isRtl ? 'التعلم والمكافآت' : 'Knowledge & Store'}
+                {tText('التعلم والمكافآت', 'Knowledge & Store')}
               </span>
 
               {[
-                { path: '/journey', labelAr: 'التعلم والمعرفة 🧠', labelEn: 'Learning & Knowledge 🧠', icon: BookOpen },
-                { path: '/lodavia-games', labelAr: 'الألعاب والتحديات 🎮', labelEn: 'Games Hub 🎮', icon: Gamepad2 },
-                { path: '/store', labelAr: 'متجر لودافيا 💎', labelEn: 'Cosmic Store 💎', icon: ShoppingBag },
-                { path: '/parallel-world', labelAr: 'العالم الموازي 🪐', labelEn: 'Parallel World 🪐', icon: Globe },
-                { path: '/offline-center', labelAr: 'مركز الأوفلاين 📡', labelEn: 'Offline Center 📡', icon: WifiOff },
-                { path: '/more', labelAr: 'كل الأقسام ☰', labelEn: 'All Hubs ☰', icon: Menu },
+                { path: '/journey', label: tText('التعلم والمعرفة 🧠', 'Learning & Knowledge 🧠'), icon: BookOpen },
+                { path: '/lodavia-games', label: tText('الألعاب والتحديات 🎮', 'Games Hub 🎮'), icon: Gamepad2 },
+                { path: '/store', label: tText('متجر لودافيا 💎', 'Cosmic Store 💎'), icon: ShoppingBag },
+                { path: '/parallel-world', label: tText('العالم الموازي 🪐', 'Parallel World 🪐'), icon: Globe },
+                { path: '/offline-center', label: tText('مركز الأوفلاين 📡', 'Offline Center 📡'), icon: WifiOff },
+                { path: '/more', label: tText('كل الأقسام ☰', 'All Hubs ☰'), icon: Menu },
               ].map((sub, i) => {
                 const SubIcon = sub.icon;
                 const isSubActive = location.pathname === sub.path;
@@ -451,7 +453,7 @@ export default function DashboardLayout() {
                     }`}
                   >
                     <SubIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{isRtl ? sub.labelAr : sub.labelEn}</span>
+                    <span className="truncate">{sub.label}</span>
                   </button>
                 );
               })}
@@ -479,7 +481,7 @@ export default function DashboardLayout() {
                 {currentUser.name}
               </h4>
               <span className="text-[10px] text-[#D9B968] font-bold block truncate">
-                💎 {currentUser.points} {isRtl ? 'نقطة' : 'Pts'}
+                💎 {currentUser.points} {tText('نقطة', 'Pts')}
               </span>
             </div>
           )}
@@ -598,7 +600,7 @@ export default function DashboardLayout() {
                   navigate('/search');
                 }}
                 className="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-sky-500/20 hover:border-sky-400/40 text-slate-700 dark:text-slate-200 transition-all cursor-pointer shrink-0"
-                title={isRtl ? 'البحث' : 'Search'}
+                title={tText('البحث', 'Search')}
                 aria-label="Search"
               >
                 <Search className="w-4 h-4 text-sky-600 dark:text-sky-400" />
@@ -612,7 +614,7 @@ export default function DashboardLayout() {
                   navigate('/notifications');
                 }}
                 className="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-sky-500/20 hover:bg-slate-200/80 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 relative transition-all cursor-pointer shrink-0"
-                title={isRtl ? 'التنبيهات' : 'Notifications'}
+                title={tText('التنبيهات', 'Notifications')}
                 aria-label="Notifications"
               >
                 <Bell className="w-4 h-4 text-sky-600 dark:text-sky-400" />
@@ -628,7 +630,7 @@ export default function DashboardLayout() {
                   setShowStoreModal(true);
                 }}
                 className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-400/15 dark:bg-amber-400/20 border border-amber-400/40 text-xs font-black text-amber-700 dark:text-amber-300 hover:from-amber-400/30 transition-all cursor-pointer shrink-0"
-                title={isRtl ? 'رصيد النقاط' : 'Points Balance'}
+                title={tText('رصيد النقاط', 'Points Balance')}
               >
                 <Sparkles className="w-3.5 h-3.5 text-[#D9B968]" />
                 <span>{currentUser.points} 💎</span>
@@ -646,7 +648,7 @@ export default function DashboardLayout() {
                     ? 'ring-2 ring-sky-400 border-2 border-sky-400 shadow-md shadow-sky-500/20 bg-sky-500/10'
                     : 'border border-slate-200 dark:border-sky-500/30 hover:border-sky-400 hover:ring-2 hover:ring-sky-400/25 bg-slate-100 dark:bg-white/5'
                 }`}
-                title={isRtl ? `الملف الشخصي (${currentUser.name})` : `My Profile (${currentUser.name})`}
+                title={tText(`الملف الشخصي (${currentUser.name})`, `My Profile (${currentUser.name})`)}
                 aria-label="My Profile"
               >
                 <img 
@@ -669,7 +671,7 @@ export default function DashboardLayout() {
                       ? 'bg-sky-500 text-white border-sky-400 shadow-md shadow-sky-500/20' 
                       : 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-sky-500/20 hover:bg-slate-200/80 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200'
                   }`}
-                  title={isRtl ? 'المزيد والخيارات (•••)' : 'More & Options (•••)'}
+                  title={tText('المزيد والخيارات (•••)', 'More & Options (•••)')}
                   aria-label="Settings and options menu"
                 >
                   <MoreVertical className="w-4 h-4 text-slate-700 dark:text-slate-300" />
@@ -687,7 +689,7 @@ export default function DashboardLayout() {
                         navigate('/profile');
                       }}
                       className="px-3 py-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between mb-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-all group"
-                      title={isRtl ? 'عرض وتعديل الملف الشخصي' : 'View & Edit Profile'}
+                      title={tText('عرض وتعديل الملف الشخصي', 'View & Edit Profile')}
                     >
                       <div className="flex items-center gap-2.5">
                         <img 
@@ -700,7 +702,7 @@ export default function DashboardLayout() {
                             {currentUser.name}
                           </p>
                           <p className="text-[10px] text-sky-600 dark:text-cyan-400 font-semibold">
-                            {isRtl ? 'عرض الملف الشخصي ←' : 'View Profile →'}
+                            {tText('عرض الملف الشخصي ←', 'View Profile →')}
                           </p>
                         </div>
                       </div>
@@ -723,14 +725,14 @@ export default function DashboardLayout() {
                         <div className="flex items-center gap-2">
                           <Flame className="w-4 h-4 text-amber-500 animate-bounce shrink-0" />
                           <div>
-                            <span className="block text-xs leading-tight">{isRtl ? 'المكافآت والهدية اليومية 🎁' : 'Daily Rewards & Gift 🎁'}</span>
+                            <span className="block text-xs leading-tight">{tText('المكافآت والهدية اليومية 🎁', 'Daily Rewards & Gift 🎁')}</span>
                             <span className="text-[10px] font-normal text-amber-600/80 dark:text-amber-400/80">
-                              {isRtl ? 'سجل حضورك واكسب النقاط' : 'Claim daily streak points'}
+                              {tText('سجل حضورك واكسب النقاط', 'Claim daily streak points')}
                             </span>
                           </div>
                         </div>
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-white font-black shrink-0">
-                          {isRtl ? 'استلام' : 'Claim'}
+                          {tText('استلام', 'Claim')}
                         </span>
                       </button>
 
@@ -744,10 +746,10 @@ export default function DashboardLayout() {
                             setIsFullScreenCameraOpen(true);
                           }}
                           className="flex flex-col items-center gap-1 p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-sky-500/10 text-slate-700 dark:text-slate-300 transition-all text-center cursor-pointer border border-transparent hover:border-sky-400/30"
-                          title={isRtl ? 'استوديو الكاميرا' : 'Camera Studio'}
+                          title={tText('استوديو الكاميرا', 'Camera Studio')}
                         >
                           <Camera className="w-4 h-4 text-sky-500" />
-                          <span className="text-[10px] font-bold truncate w-full">{isRtl ? 'الكاميرا' : 'Camera'}</span>
+                          <span className="text-[10px] font-bold truncate w-full">{tText('الكاميرا', 'Camera')}</span>
                         </button>
                         <button
                           id="btn-menu-projects"
@@ -757,10 +759,10 @@ export default function DashboardLayout() {
                             navigate('/projects');
                           }}
                           className="flex flex-col items-center gap-1 p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-cyan-500/10 text-slate-700 dark:text-slate-300 transition-all text-center cursor-pointer border border-transparent hover:border-cyan-400/30"
-                          title={isRtl ? 'استوديو المشاريع' : 'Projects Hub'}
+                          title={tText('استوديو المشاريع', 'Projects Hub')}
                         >
                           <Rocket className="w-4 h-4 text-cyan-500" />
-                          <span className="text-[10px] font-bold truncate w-full">{isRtl ? 'المشاريع' : 'Projects'}</span>
+                          <span className="text-[10px] font-bold truncate w-full">{tText('المشاريع', 'Projects')}</span>
                         </button>
                         <button
                           id="btn-menu-offline"
@@ -770,10 +772,10 @@ export default function DashboardLayout() {
                             navigate('/offline-center');
                           }}
                           className="flex flex-col items-center gap-1 p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-amber-500/10 text-slate-700 dark:text-slate-300 transition-all text-center cursor-pointer border border-transparent hover:border-amber-400/30"
-                          title={isRtl ? 'مركز الأوفلاين' : 'Offline Center'}
+                          title={tText('مركز الأوفلاين', 'Offline Center')}
                         >
                           <WifiOff className="w-4 h-4 text-amber-500" />
-                          <span className="text-[10px] font-bold truncate w-full">{isRtl ? 'الأوفلاين' : 'Offline'}</span>
+                          <span className="text-[10px] font-bold truncate w-full">{tText('الأوفلاين', 'Offline')}</span>
                         </button>
                       </div>
 
@@ -789,9 +791,9 @@ export default function DashboardLayout() {
                                 <Sun className="w-4 h-4 text-amber-500 shrink-0" />
                               )}
                               <div className="text-start">
-                                <span className="block text-[11px] font-bold leading-tight">{isRtl ? 'الطقس والتقويم' : 'Weather & Date'}</span>
+                                <span className="block text-[11px] font-bold leading-tight">{tText('الطقس والتقويم', 'Weather & Date')}</span>
                                 <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                                  {new Date().toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                  {new Date().toLocaleDateString(lang === 'ar' ? 'ar-SA' : lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                 </span>
                               </div>
                             </div>
@@ -816,7 +818,7 @@ export default function DashboardLayout() {
                             }}
                             className="text-[10px] font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
                           >
-                            {isRtl ? 'المزيد ←' : 'More →'}
+                            {tText('المزيد ←', 'More →')}
                           </button>
                         </div>
                         <div className="grid grid-cols-2 gap-1">
@@ -854,9 +856,9 @@ export default function DashboardLayout() {
                       >
                         <Settings className="w-4 h-4 text-sky-600 dark:text-cyan-400 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <span className="block leading-tight">{isRtl ? 'الإعدادات العامة ⚙️' : 'General Settings ⚙️'}</span>
+                          <span className="block leading-tight">{tText('الإعدادات العامة ⚙️', 'General Settings ⚙️')}</span>
                           <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400 block leading-tight">
-                            {isRtl ? 'تخصيص الحساب والمظهر والأمان' : 'Account, display & security'}
+                            {tText('تخصيص الحساب والمظهر والأمان', 'Account, display & security')}
                           </span>
                         </div>
                       </button>
@@ -876,7 +878,7 @@ export default function DashboardLayout() {
                           ) : (
                             <Moon className="w-4 h-4 text-sky-500 shrink-0" />
                           )}
-                          <span>{theme === 'dark' ? (isRtl ? 'الوضع النهاري' : 'Light Mode') : (isRtl ? 'الوضع الليلي' : 'Dark Mode')}</span>
+                          <span>{theme === 'dark' ? tText('الوضع النهاري', 'Light Mode') : tText('الوضع الليلي', 'Dark Mode')}</span>
                         </div>
                         <span className="text-[10px] bg-slate-200/70 dark:bg-white/10 px-2 py-0.5 rounded-full font-mono">
                           {theme === 'dark' ? 'Dark' : 'Light'}
@@ -894,7 +896,7 @@ export default function DashboardLayout() {
                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-all cursor-pointer text-start font-medium"
                       >
                         <Shield className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>{isRtl ? 'الخصوصية والأمان' : 'Privacy & Security'}</span>
+                        <span>{tText('الخصوصية والأمان', 'Privacy & Security')}</span>
                       </button>
 
                       {/* 8. All Hubs & Explore (More) */}
@@ -908,7 +910,7 @@ export default function DashboardLayout() {
                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-all cursor-pointer text-start font-medium"
                       >
                         <Menu className="w-4 h-4 text-purple-500 shrink-0" />
-                        <span>{isRtl ? 'جميع الأقسام والاستكشاف' : 'All Hubs & Sections'}</span>
+                        <span>{tText('جميع الأقسام والاستكشاف', 'All Hubs & Sections')}</span>
                       </button>
 
                     </div>
@@ -956,23 +958,24 @@ export default function DashboardLayout() {
             }`}
           >
             <Home className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-[8.5px] font-bold tracking-tight">{isRtl ? 'الرئيسية' : 'Home'}</span>
+            <span className="text-[8.5px] font-bold tracking-tight">{tText('الرئيسية', 'Home')}</span>
           </button>
 
-          {/* Tab 2: Communities (المجتمعات) */}
+          {/* Tab 2: Media (المرئيات) */}
           <button 
+            id="tab-bottom-media"
             onClick={() => {
               playSynthSound(500, 'sine', 0.05);
-              navigate('/communities');
+              navigate('/media');
             }}
             className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-2xl transition-all ${
-              activeTab === 'communities' 
+              activeTab === 'media' 
                 ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 font-black' 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
-            <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-[8.5px] font-bold tracking-tight">{isRtl ? 'المجتمعات' : 'Spaces'}</span>
+            <Film className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-[8.5px] font-bold tracking-tight">{tText('المرئيات', 'Media')}</span>
           </button>
 
           {/* Central Lumo Button (3D Ray Face Avatar) */}
@@ -1024,7 +1027,7 @@ export default function DashboardLayout() {
                 2
               </span>
             </div>
-            <span className="text-[8.5px] font-bold tracking-tight">{isRtl ? 'الرسائل' : 'Messages'}</span>
+            <span className="text-[8.5px] font-bold tracking-tight">{tText('الرسائل', 'Messages')}</span>
           </button>
 
           {/* Tab 5: Profile (الملف الشخصي) */}
@@ -1056,7 +1059,7 @@ export default function DashboardLayout() {
               )}
             </div>
             <span className="text-[8.5px] font-bold tracking-tight whitespace-nowrap">
-              {isRtl ? 'الملف الشخصي' : 'Profile'}
+              {tText('الملف الشخصي', 'Profile')}
             </span>
           </button>
 
@@ -1069,7 +1072,7 @@ export default function DashboardLayout() {
           <div className="bg-white dark:bg-[#0F172A] rounded-3xl p-6 max-w-md w-full border border-[#E2E8F0] dark:border-slate-800 shadow-2xl flex flex-col gap-4 animate-[scaleIn_0.25s_ease-out] max-h-[85vh] overflow-y-auto text-[#111827] dark:text-slate-100">
             
             <div className="flex justify-between items-center pb-2 border-b border-[#E2E8F0] dark:border-slate-800">
-              <h3 className="text-sm font-extrabold text-[#111827] dark:text-slate-100">{lang === 'ar' ? 'ماذا ترغب في إنشائه اليوم؟' : 'What to create today?'}</h3>
+              <h3 className="text-sm font-extrabold text-[#111827] dark:text-slate-100">{tText('ماذا ترغب في إنشائه اليوم؟', 'What to create today?')}</h3>
               <button 
                 onClick={() => {
                   playSynthSound(440, 'sine', 0.1);
@@ -1113,12 +1116,12 @@ export default function DashboardLayout() {
                     {!opt.ready && (
                       <span className="absolute -top-1.5 -end-1.5 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[8px] font-black">
                         <Lock className="w-2 h-2" />
-                        {lang === 'ar' ? 'قريبًا' : 'Soon'}
+                        {tText('قريبًا', 'Soon')}
                       </span>
                     )}
                     <Icon className="w-4 h-4" />
                     <span className="text-[9.5px] font-bold leading-tight">
-                      {lang === 'ar' ? opt.labelAr : opt.labelEn}
+                      {tText(opt.labelAr, opt.labelEn)}
                     </span>
                   </button>
                 );
@@ -1133,11 +1136,11 @@ export default function DashboardLayout() {
               
               {selectedCreateType === 'post' && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{lang === 'ar' ? 'محتوى المنشور' : 'Post Content'}</label>
+                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{tText('محتوى المنشور', 'Post Content')}</label>
                   <textarea
                     value={postContent}
                     onChange={(e) => setPostContent(e.target.value)}
-                    placeholder={lang === 'ar' ? 'اكتب أفكارك وخبراتك هنا ليراها المجتمع...' : 'Write your experiences here...'}
+                    placeholder={tText('اكتب أفكارك وخبراتك هنا ليراها المجتمع...', 'Write your experiences here...')}
                     className={`w-full py-2.5 px-3 text-xs h-24 resize-none ${themeStyles.glassInput}`}
                   />
                 </div>
@@ -1145,12 +1148,12 @@ export default function DashboardLayout() {
 
               {selectedCreateType === 'voice' && (
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{lang === 'ar' ? 'عنوان الغرفة الصوتية' : 'Voice Room Title'}</label>
+                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">{tText('عنوان الغرفة الصوتية', 'Voice Room Title')}</label>
                   <input
                     type="text"
                     value={newRoomTitle}
                     onChange={(e) => setNewRoomTitle(e.target.value)}
-                    placeholder={lang === 'ar' ? 'مثال: مناقشة كود ريأكت وتطوير الهوية' : 'Example: Design system debate'}
+                    placeholder={tText('مثال: مناقشة كود ريأكت وتطوير الهوية', 'Example: Design system debate')}
                     className={`w-full py-2.5 px-3 text-xs ${themeStyles.glassInput}`}
                   />
                 </div>
@@ -1160,9 +1163,10 @@ export default function DashboardLayout() {
                 <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs flex items-center gap-2">
                   <Info className="w-4 h-4 shrink-0" />
                   <span>
-                    {lang === 'ar' 
-                      ? 'هذا النوع قيد التطوير حاليًا وسيتوفر قريبًا — جرّب "منشور جديد" أو "صالون صوتي" الآن.' 
-                      : 'This creation type is still in development — try "New Post" or "Audio Room" for now.'}
+                    {tText(
+                      'هذا النوع قيد التطوير حاليًا وسيتوفر قريبًا — جرّب "منشور جديد" أو "صالون صوتي" الآن.',
+                      'This creation type is still in development — try "New Post" or "Audio Room" for now.'
+                    )}
                   </span>
                 </div>
               )}
@@ -1172,7 +1176,7 @@ export default function DashboardLayout() {
                 disabled={!createOptions.find((o) => o.id === selectedCreateType)?.ready}
                 className={`w-full py-3 disabled:opacity-40 disabled:cursor-not-allowed ${themeStyles.buttonPrimary}`}
               >
-                {lang === 'ar' ? 'تأكيد ونشر الآن 🚀' : 'Confirm & Publish 🚀'}
+                {tText('تأكيد ونشر الآن 🚀', 'Confirm & Publish 🚀')}
               </button>
 
             </form>
@@ -1187,7 +1191,7 @@ export default function DashboardLayout() {
           <div className="bg-white dark:bg-[#0F172A] rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col gap-4 animate-[scaleIn_0.25s_ease-out] text-slate-900 dark:text-slate-100">
             
             <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{isRtl ? 'تعديل بيانات الملف الشخصي' : 'Edit Profile Settings'}</h3>
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{tText('تعديل بيانات الملف الشخصي', 'Edit Profile Settings')}</h3>
               <button 
                 onClick={() => {
                   playSynthSound(440, 'sine', 0.1);
@@ -1201,7 +1205,7 @@ export default function DashboardLayout() {
 
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">{isRtl ? 'الاسم' : 'Name'}</label>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">{tText('الاسم', 'Name')}</label>
                 <input
                   type="text"
                   value={editName}
@@ -1211,7 +1215,7 @@ export default function DashboardLayout() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">{isRtl ? 'النبذة التعريفية' : 'Bio'}</label>
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">{tText('النبذة التعريفية', 'Bio')}</label>
                 <textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
@@ -1233,7 +1237,7 @@ export default function DashboardLayout() {
                 }}
                 className={`w-full py-3 ${themeStyles.buttonPrimary}`}
               >
-                {isRtl ? 'حفظ التعديلات ✨' : 'Save Changes ✨'}
+                {tText('حفظ التعديلات ✨', 'Save Changes ✨')}
               </button>
             </div>
 
@@ -1252,10 +1256,10 @@ export default function DashboardLayout() {
                 <Sparkles className="w-5 h-5 text-amber-500 animate-pulse" />
                 <div>
                   <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">
-                    {isRtl ? 'متجر مكافآت لودافيا 🪐' : 'Lodavia Rewards Store 🪐'}
+                    {tText('متجر مكافآت لودافيا 🪐', 'Lodavia Rewards Store 🪐')}
                   </h3>
                   <span className="text-[10px] text-slate-500 dark:text-slate-400 block -mt-0.5 font-medium">
-                    {isRtl ? 'أكمل المهام أو شاهد الإعلانات واقتنِ أروع الميزات!' : 'Watch ads to earn points & unlock custom cosmetic upgrades!'}
+                    {tText('أكمل المهام أو شاهد الإعلانات واقتنِ أروع الميزات!', 'Watch ads to earn points & unlock custom cosmetic upgrades!')}
                   </span>
                 </div>
               </div>
@@ -1277,9 +1281,9 @@ export default function DashboardLayout() {
                   <Sparkles className="w-6 h-6 animate-spin-slow" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-bold tracking-widest">{isRtl ? 'الرصيد الحالي' : 'Current Balance'}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase font-bold tracking-widest">{tText('الرصيد الحالي', 'Current Balance')}</span>
                   <span className="text-xl font-black text-amber-600 dark:text-amber-400">
-                    {currentUser.points} {isRtl ? 'نقطة 💎' : 'Lodavia Pts 💎'}
+                    {currentUser.points} {tText('نقطة 💎', 'Lodavia Pts 💎')}
                   </span>
                 </div>
               </div>
@@ -1289,7 +1293,7 @@ export default function DashboardLayout() {
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Tv className="w-4 h-4 shrink-0" />
-                <span>{isRtl ? 'شاهد إعلانًا (+50 نقطة) 📺' : 'Watch Ad (+50 Pts) 📺'}</span>
+                <span>{tText('شاهد إعلانًا (+50 نقطة) 📺', 'Watch Ad (+50 Pts) 📺')}</span>
               </button>
             </div>
 
@@ -1303,7 +1307,7 @@ export default function DashboardLayout() {
             {/* Store items list */}
             <div className="flex flex-col gap-3">
               <h4 className="text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                {isRtl ? 'قائمة المشتريات المتاحة 💎' : 'Available Cosmetic Enhancements 💎'}
+                {tText('قائمة المشتريات المتاحة 💎', 'Available Cosmetic Enhancements 💎')}
               </h4>
 
               <div className="grid grid-cols-1 gap-3">
@@ -1324,15 +1328,15 @@ export default function DashboardLayout() {
                         </div>
                         <div>
                           <h5 className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                            <span>{isRtl ? item.nameAr : item.nameEn}</span>
+                            <span>{tText(item.nameAr, item.nameEn)}</span>
                             {isOwned && (
                               <span className="text-[9px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">
-                                {isRtl ? 'ممتلك' : 'Owned'}
+                                {tText('ممتلك', 'Owned')}
                               </span>
                             )}
                           </h5>
                           <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                            {isRtl ? item.descriptionAr : item.descriptionEn}
+                            {tText(item.descriptionAr, item.descriptionEn)}
                           </p>
                         </div>
                       </div>
@@ -1349,7 +1353,7 @@ export default function DashboardLayout() {
                         ) : (
                           <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                             <CheckCircle2 className="w-4 h-4" />
-                            <span>{isRtl ? 'مفعّل' : 'Active'}</span>
+                            <span>{tText('مفعّل', 'Active')}</span>
                           </div>
                         )}
                       </div>
@@ -1370,7 +1374,7 @@ export default function DashboardLayout() {
                 className={`w-full py-2.5 ${themeStyles.buttonPrimary}`}
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>{isRtl ? 'تصفح المتجر كاملاً 🛒' : 'Browse Full Store 🛒'}</span>
+                <span>{tText('تصفح المتجر كاملاً 🛒', 'Browse Full Store 🛒')}</span>
               </button>
             </div>
 
@@ -1384,17 +1388,17 @@ export default function DashboardLayout() {
           
           <div className="flex justify-between items-center w-full max-w-xl mx-auto mt-4">
             <span className="text-[10px] uppercase font-black tracking-widest text-amber-300 bg-amber-500/20 px-2.5 py-1 rounded-full animate-pulse">
-              {isRtl ? 'إعلان كوني ممول' : 'Sponsored Cosmic Ad'}
+              {tText('إعلان كوني ممول', 'Sponsored Cosmic Ad')}
             </span>
             <div className="text-xs font-bold text-slate-300">
               {adCountdown > 0 ? (
                 <span className="flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full border border-white/20">
-                  {isRtl ? `المكافأة تظهر بعد: ${adCountdown} ثوانٍ` : `Reward in: ${adCountdown}s`}
+                  {tText(`المكافأة تظهر بعد: ${adCountdown} ثوانٍ`, `Reward in: ${adCountdown}s`)}
                 </span>
               ) : (
                 <span className="text-emerald-300 font-black animate-bounce flex items-center gap-1 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  {isRtl ? 'المكافأة جاهزة للمطالبة!' : 'Reward ready to claim!'}
+                  {tText('المكافأة جاهزة للمطالبة!', 'Reward ready to claim!')}
                 </span>
               )}
             </div>
@@ -1417,9 +1421,10 @@ export default function DashboardLayout() {
                 {currentAdCompany}
               </h3>
               <p className="text-xs text-slate-200 mt-2 max-w-sm leading-relaxed">
-                {isRtl 
-                  ? 'اكتشف التقنيات الفائقة وعش الابتكار الرقمي في مجتمعاتنا الكونية المتصلة بذكاء.' 
-                  : 'Experience modern engineering and infinite scaling inside our unified neural hubs.'}
+                {tText(
+                  'اكتشف التقنيات الفائقة وعش الابتكار الرقمي في مجتمعاتنا الكونية المتصلة بذكاء.',
+                  'Experience modern engineering and infinite scaling inside our unified neural hubs.'
+                )}
               </p>
             </div>
           </div>
@@ -1430,7 +1435,7 @@ export default function DashboardLayout() {
                 disabled
                 className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-slate-500 font-bold text-xs cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <span>{isRtl ? `يرجى المشاهدة للحصول على 50 نقطة (${adCountdown})` : `Please watch to receive 50 Pts (${adCountdown})`}</span>
+                <span>{tText(`يرجى المشاهدة للحصول على 50 نقطة (${adCountdown})`, `Please watch to receive 50 Pts (${adCountdown})`)}</span>
               </button>
             ) : (
               <button 
@@ -1438,7 +1443,7 @@ export default function DashboardLayout() {
                 className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 text-slate-950 font-black text-xs transition-all active:scale-95 shadow-xl flex items-center justify-center gap-2 cursor-pointer animate-bounce"
               >
                 <Check className="w-5 h-5 stroke-[3]" />
-                <span>{isRtl ? 'المطالبة بـ 50 نقطة الآن! 🎉' : 'Claim 50 Points Now! 🎉'}</span>
+                <span>{tText('المطالبة بـ 50 نقطة الآن! 🎉', 'Claim 50 Points Now! 🎉')}</span>
               </button>
             )}
           </div>

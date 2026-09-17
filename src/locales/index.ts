@@ -6,8 +6,9 @@ import { es } from './es';
 import { de } from './de';
 import { zh } from './zh';
 import { ja } from './ja';
+import { lookupPhrase, tText, PHRASE_DICTIONARY } from './phraseDictionary';
 
-export { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE, FALLBACK_LANGUAGE };
+export { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE, FALLBACK_LANGUAGE, lookupPhrase, tText, PHRASE_DICTIONARY };
 export type { SupportedLanguage, LanguageInfo };
 
 export const translations: Record<SupportedLanguage, typeof ar> = {
@@ -95,7 +96,15 @@ export function translate(
     result = getNestedValue(translations.ar, key);
   }
 
-  // 4. Fallback to provided fallback string or key itself
+  // 4. Try phrase dictionary lookup
+  if (result === undefined) {
+    const phrase = lookupPhrase(key, currentLang);
+    if (phrase !== key) {
+      result = phrase;
+    }
+  }
+
+  // 5. Fallback to provided fallback string or key itself
   if (result === undefined) {
     result = fallback !== undefined ? fallback : key;
   }

@@ -383,21 +383,24 @@ export function ChatWindow({
     <div className="flex flex-col h-full relative bg-[#f1f5f9] dark:bg-[#0b1322] text-start transition-colors duration-200" id="chat-window-pane">
       
       {/* Contact Top Header */}
-      <div className="p-3.5 sm:p-4 border-b border-[#E2E8F0] dark:border-white/10 flex justify-between items-center bg-white/90 dark:bg-[#111827]/90 backdrop-blur-xl z-20 shadow-sm">
-        <div className="flex items-center gap-3">
+      <div className="p-2.5 sm:p-4 border-b border-[#E2E8F0] dark:border-white/10 flex justify-between items-center bg-white/90 dark:bg-[#111827]/90 backdrop-blur-xl z-20 shadow-sm gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
           <button 
             onClick={onBack}
-            className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-white/5 text-[#475569] dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 transition-all mr-1 cursor-pointer"
+            className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-white/5 text-[#475569] dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 active:scale-95 transition-all shrink-0 cursor-pointer"
             title="Back to conversation list"
           >
             <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
           </button>
-          <div className="relative">
+          <div className="relative shrink-0 w-10 h-10 select-none">
             <img 
-              src={conversation.contactAvatar} 
+              src={conversation.contactAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.contactName)}&background=0284c7&color=fff`} 
               alt={conversation.contactName} 
-              className="w-10 h-10 rounded-full object-cover border border-[#E2E8F0] dark:border-white/10 shadow-sm"
+              className="w-10 h-10 min-w-10 min-h-10 rounded-full object-cover border border-[#E2E8F0] dark:border-white/10 shadow-sm shrink-0 aspect-square"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.contactName)}&background=0284c7&color=fff`;
+              }}
             />
             {conversation.isOnline ? (
               <span className="absolute bottom-0 right-0 rtl:right-auto rtl:left-0 flex h-3.5 w-3.5">
@@ -408,35 +411,35 @@ export function ChatWindow({
               <span className="absolute bottom-0 right-0 rtl:right-auto rtl:left-0 w-3 h-3 rounded-full bg-slate-400 dark:bg-white/20 border-2 border-white dark:border-[#111827]" />
             )}
           </div>
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs sm:text-sm font-black text-[#111827] dark:text-white font-sans">{conversation.contactName}</span>
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-xs sm:text-sm font-black text-[#111827] dark:text-white font-sans truncate">{conversation.contactName}</span>
               {(conversation.contactName.includes('سارة') || conversation.contactName.includes('يوسف') || conversation.contactName.includes('Sarah')) && (
-                <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-cyan-400" fill="currentColor" style={{ fillOpacity: 0.15 }} />
+                <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-cyan-400 shrink-0" fill="currentColor" style={{ fillOpacity: 0.15 }} />
               )}
               {conversation.isBlocked && (
-                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-500/30">
+                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-500/30 shrink-0">
                   <Ban className="w-3 h-3" />
                   <span>{lang === 'ar' ? 'محظور' : 'Blocked'}</span>
                 </span>
               )}
             </div>
-            <span className="text-[10px] text-[#64748B] dark:text-slate-400 flex items-center gap-1.5 font-mono">
+            <span className="text-[10px] text-[#64748B] dark:text-slate-400 flex items-center gap-1.5 font-mono truncate">
               {conversation.isBlocked ? (
-                <span className="text-rose-600 dark:text-rose-400 font-semibold">{lang === 'ar' ? 'تم حظر المستخدم' : 'Blocked contact'}</span>
+                <span className="text-rose-600 dark:text-rose-400 font-semibold truncate">{lang === 'ar' ? 'تم حظر المستخدم' : 'Blocked contact'}</span>
               ) : isTyping ? (
-                <span className="text-sky-600 dark:text-cyan-400 font-bold animate-pulse">{lang === 'ar' ? 'يكتب الآن...' : 'Typing...'}</span>
+                <span className="text-sky-600 dark:text-cyan-400 font-bold animate-pulse truncate">{lang === 'ar' ? 'يكتب الآن...' : 'Typing...'}</span>
               ) : conversation.isOnline ? (
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{lang === 'ar' ? 'متصل بالشبكة' : 'Secure Uplink Online'}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold truncate">{lang === 'ar' ? 'متصل بالشبكة' : 'Secure Uplink Online'}</span>
               ) : (
-                <span className="text-[#64748B] dark:text-slate-500">{lang === 'ar' ? 'غير متصل' : 'Offline'}</span>
+                <span className="text-[#64748B] dark:text-slate-500 truncate">{lang === 'ar' ? 'غير متصل' : 'Offline'}</span>
               )}
             </span>
           </div>
         </div>
 
         {/* Media Call & Chat Settings Header Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           
           {/* Quick Block / Unblock Action Button */}
           {onToggleBlockUser && (
@@ -446,7 +449,7 @@ export function ChatWindow({
                 playSynthSound(nextState ? 200 : 600, 'sine', 0.1);
                 onToggleBlockUser(conversation.id, nextState);
               }}
-              className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+              className={`hidden sm:flex p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer ${
                 conversation.isBlocked
                   ? 'bg-rose-100 dark:bg-rose-500/20 border-rose-300 dark:border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-500/30'
                   : 'bg-slate-100 dark:bg-white/5 border-[#E2E8F0] dark:border-white/10 text-[#475569] dark:text-slate-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10'
@@ -469,7 +472,7 @@ export function ChatWindow({
               playSynthSound(500, 'sine', 0.05);
               setShowInChatSearch(!showInChatSearch);
             }}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+            className={`hidden sm:flex p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer ${
               showInChatSearch
                 ? 'bg-sky-50 dark:bg-cyan-500/20 border-sky-400 dark:border-cyan-400/40 text-sky-700 dark:text-cyan-300'
                 : 'bg-slate-100 dark:bg-white/5 border-[#E2E8F0] dark:border-white/10 text-[#475569] dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'
@@ -482,7 +485,7 @@ export function ChatWindow({
           {/* Voice Call */}
           <button 
             onClick={() => handleStartCall('voice')}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+            className={`p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer ${
               conversation.isBlocked 
                 ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-white/5 border-[#E2E8F0] dark:border-white/10 text-slate-400' 
                 : 'bg-slate-100 dark:bg-white/5 border-[#E2E8F0] dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-sky-600 dark:text-cyan-400 active:scale-95'
@@ -496,7 +499,7 @@ export function ChatWindow({
           {/* Video Call */}
           <button 
             onClick={() => handleStartCall('video')}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+            className={`p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer ${
               conversation.isBlocked 
                 ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-white/5 border-[#E2E8F0] dark:border-white/10 text-slate-400' 
                 : 'bg-slate-100 dark:bg-white/5 border-[#E2E8F0] dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-sky-600 dark:text-cyan-400 active:scale-95'
@@ -514,7 +517,7 @@ export function ChatWindow({
               playSynthSound(600, 'sine', 0.08);
               setShowSettingsModal(true);
             }}
-            className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500/20 text-sky-600 dark:text-cyan-400 active:scale-95 transition-all cursor-pointer"
+            className="p-2 sm:p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500/20 text-sky-600 dark:text-cyan-400 active:scale-95 transition-all cursor-pointer"
             title={lang === 'ar' ? 'خيارات وإعدادات المحادثة (•••)' : 'Chat Settings & Options (•••)'}
             aria-label="Chat Settings and Options"
           >

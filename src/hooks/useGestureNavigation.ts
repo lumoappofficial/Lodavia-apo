@@ -10,7 +10,7 @@ export interface MainNavSection {
 
 export const MAIN_NAV_SECTIONS: MainNavSection[] = [
   { path: '/home', id: 'home', labelAr: 'الرئيسية', labelEn: 'Home' },
-  { path: '/communities', id: 'communities', labelAr: 'المجتمعات', labelEn: 'Communities' },
+  { path: '/media', id: 'media', labelAr: 'المرئيات', labelEn: 'Media' },
   { path: '/lumo', id: 'lumo', labelAr: 'Lumo', labelEn: 'Lumo' },
   { path: '/messages', id: 'messages', labelAr: 'الرسائل', labelEn: 'Messages' },
   { path: '/profile', id: 'profile', labelAr: 'الملف الشخصي', labelEn: 'Profile' },

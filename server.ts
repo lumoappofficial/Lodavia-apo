@@ -159,7 +159,7 @@ app.post("/api/ai/chat", validateAiChatPayload, async (req, res) => {
     const { message, history, context, lang } = req.body;
 
     // Fast response for automated test tokens in development
-    if (process.env.NODE_ENV !== "production" && req.headers.authorization?.includes("mock_test_token_")) {
+    if (process.env.NODE_ENV !== "production" && process.env.ALLOW_TEST_TOKENS === 'true' && req.headers.authorization?.includes("mock_test_token_")) {
       return res.json({ text: "استجابة اختبارية للمساعد الذكي Lodavia AI" });
     }
 

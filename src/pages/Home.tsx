@@ -69,7 +69,9 @@ export default function Home() {
     aiSuggestionText,
     setAiSuggestionText,
     setActiveCommunity,
-    setShowStoreModal
+    setShowStoreModal,
+    t,
+    tText
   } = useApp();
 
   const navigate = useNavigate();
@@ -447,7 +449,7 @@ export default function Home() {
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-white dark:border-[#0D1224] rounded-full" />
           </div>
           <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[54px] group-hover:text-sky-500 transition-colors">
-            {lang === 'ar' ? 'ملفي' : 'You'}
+            {tText('ملفي', 'You')}
           </span>
         </button>
 
@@ -467,7 +469,7 @@ export default function Home() {
             }, 460);
           }}
           className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer active:scale-95 relative"
-          title={lang === 'ar' ? 'مستكشف الكون 🪐' : '3D Universe'}
+          title={tText('مستكشف الكون 🪐', '3D Universe 🪐')}
         >
           <div
             className={`relative w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-purple-500 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-xs transition-all duration-500 ${
@@ -487,26 +489,27 @@ export default function Home() {
             </div>
           </div>
           <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[54px] group-hover:text-purple-400 transition-colors">
-            {lang === 'ar' ? 'الكون 3D' : 'Universe'}
+            {tText('الكون 3D', '3D Universe')}
           </span>
         </button>
 
-        {/* Portal 3: Media Theatre */}
+        {/* Portal 3: Communities (المجتمعات) */}
         <button
+          id="portal-communities"
           onClick={() => {
             playSynthSound(700, 'sine', 0.1);
-            navigate('/media');
+            navigate('/communities');
           }}
           className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer active:scale-95"
-          title={lang === 'ar' ? 'مسرح المرئيات 🎬' : 'Media Theatre'}
+          title={tText('المجتمعات الكونية 🪐', 'Communities 🪐')}
         >
           <div className="relative w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-cyan-400 via-sky-500 to-indigo-500 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
             <div className="w-full h-full rounded-full bg-slate-50 dark:bg-[#0D1224] flex items-center justify-center border-2 border-white dark:border-[#0D1224]">
-              <Film className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
+              <Users className="w-4 h-4 text-cyan-500 group-hover:scale-110 transition-transform" />
             </div>
           </div>
           <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[54px] group-hover:text-cyan-400 transition-colors">
-            {lang === 'ar' ? 'المرئيات' : 'Theatre'}
+            {tText('المجتمعات', 'Communities')}
           </span>
         </button>
 
@@ -517,7 +520,7 @@ export default function Home() {
             navigate('/projects');
           }}
           className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer active:scale-95"
-          title={lang === 'ar' ? 'استوديو المشاريع 🚀' : 'Projects'}
+          title={tText('استوديو المشاريع 🚀', 'Projects 🚀')}
         >
           <div className="relative w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-purple-500 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
             <div className="w-full h-full rounded-full bg-slate-50 dark:bg-[#0D1224] flex items-center justify-center border-2 border-white dark:border-[#0D1224]">
@@ -525,7 +528,7 @@ export default function Home() {
             </div>
           </div>
           <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[54px] group-hover:text-purple-400 transition-colors">
-            {lang === 'ar' ? 'المشاريع' : 'Projects'}
+            {tText('المشاريع', 'Projects')}
           </span>
         </button>
 
@@ -536,7 +539,7 @@ export default function Home() {
             navigate('/camera');
           }}
           className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer active:scale-95"
-          title={lang === 'ar' ? 'استوديو الكاميرا 📸' : 'Camera'}
+          title={tText('استوديو الكاميرا 📸', 'Camera 📸')}
         >
           <div className="relative w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-cyan-400 via-sky-500 to-purple-500 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
             <div className="w-full h-full rounded-full bg-slate-50 dark:bg-[#0D1224] flex items-center justify-center border-2 border-white dark:border-[#0D1224]">
@@ -544,7 +547,7 @@ export default function Home() {
             </div>
           </div>
           <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[54px] group-hover:text-cyan-400 transition-colors">
-            {lang === 'ar' ? 'الكاميرا' : 'Camera'}
+            {tText('الكاميرا', 'Camera')}
           </span>
         </button>
 
@@ -555,7 +558,7 @@ export default function Home() {
             navigate('/lodavia-games');
           }}
           className="flex flex-col items-center gap-1 shrink-0 group cursor-pointer active:scale-95"
-          title={lang === 'ar' ? 'مركز الألعاب 🎮' : 'Games'}
+          title={tText('مركز الألعاب 🎮', 'Games 🎮')}
         >
           <div className="relative w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 via-orange-500 to-yellow-400 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
             <div className="w-full h-full rounded-full bg-slate-50 dark:bg-[#0D1224] flex items-center justify-center border-2 border-white dark:border-[#0D1224]">
@@ -563,7 +566,7 @@ export default function Home() {
             </div>
           </div>
           <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate max-w-[54px] group-hover:text-amber-400 transition-colors">
-            {lang === 'ar' ? 'الألعاب' : 'Games'}
+            {tText('الألعاب', 'Games')}
           </span>
         </button>
 
@@ -589,7 +592,7 @@ export default function Home() {
             }`}
           >
             <Compass className="w-3.5 h-3.5 animate-[spin_10s_linear_infinite]" />
-            <span>{lang === 'ar' ? 'الخلاصة الكونية 📡' : 'Cosmic Feed 📡'}</span>
+            <span>{tText('الخلاصة الكونية 📡', 'Cosmic Feed 📡')}</span>
           </button>
 
           <button
@@ -604,12 +607,12 @@ export default function Home() {
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>{lang === 'ar' ? 'لوحة الاستكشاف 🪐' : 'Explore Hub 🪐'}</span>
+            <span>{tText('لوحة الاستكشاف 🪐', 'Explore Hub 🪐')}</span>
           </button>
         </div>
 
         <span className="text-[9px] text-[#6E7685] dark:text-[#94A3B8] font-mono font-bold hidden sm:inline-block">
-          {homeTab === 'feed' ? (lang === 'ar' ? 'بث المنشورات المباشر' : 'Live Quantum Stream') : (lang === 'ar' ? 'مركز الاستكشاف الكوني' : 'Cosmic Explorer Node')}
+          {homeTab === 'feed' ? tText('بث المنشورات المباشر', 'Live Quantum Stream') : tText('مركز الاستكشاف الكوني', 'Cosmic Explorer Node')}
         </span>
       </div>
 
@@ -641,7 +644,7 @@ export default function Home() {
                       handleCreatePost();
                     }
                   }}
-                  placeholder={lang === 'ar' ? 'ما الجديد اليوم فلكياً؟ ✨' : "What's happening in your universe? ✨"}
+                  placeholder={tText('ما الجديد اليوم فلكياً؟ ✨', "What's happening in your universe? ✨")}
                   className="flex-1 bg-slate-100/80 dark:bg-[#121826] border border-transparent focus:border-sky-400 dark:focus:border-sky-500 rounded-full px-3.5 py-1.5 text-xs text-[#1A1F2C] dark:text-[#F8FAFC] placeholder-[#9DA5B4] dark:placeholder-[#64748B] focus:outline-none transition-all"
                 />
 
@@ -657,7 +660,7 @@ export default function Home() {
                         ? 'border-[#48B8FF] bg-[#48B8FF]/15 text-[#48B8FF]'
                         : 'border-transparent text-emerald-500 hover:bg-emerald-500/10'
                     }`}
-                    title={lang === 'ar' ? 'إرفاق صورة' : 'Attach Photo'}
+                    title={tText('إرفاق صورة', 'Attach Photo')}
                   >
                     <ImageIcon className="w-4 h-4" />
                   </button>
@@ -672,7 +675,7 @@ export default function Home() {
                         ? 'border-purple-500 bg-purple-500/15 text-purple-500'
                         : 'border-transparent text-purple-500 hover:bg-purple-500/10'
                     }`}
-                    title={lang === 'ar' ? 'إنشاء استفتاء' : 'Create Poll'}
+                    title={tText('إنشاء استفتاء', 'Create Poll')}
                   >
                     <Vote className="w-4 h-4" />
                   </button>
@@ -681,7 +684,7 @@ export default function Home() {
                     onClick={handleCreatePost}
                     disabled={!newPostText.trim() && !newPostPollQuestion}
                     className="p-1.5 rounded-full bg-[#48B8FF] hover:bg-[#38A8EF] text-white disabled:opacity-40 transition-all shadow-sm cursor-pointer active:scale-95 shrink-0"
-                    title={lang === 'ar' ? 'إطلاق كوني 📡' : 'Cosmic Post 📡'}
+                    title={tText('إطلاق كوني 📡', 'Cosmic Post 📡')}
                   >
                     <Send className="w-3.5 h-3.5 rtl:rotate-180" />
                   </button>
@@ -710,7 +713,7 @@ export default function Home() {
                     type="text"
                     value={newPostPollQuestion}
                     onChange={(e) => setNewPostPollQuestion(e.target.value)}
-                    placeholder={lang === 'ar' ? 'سؤال الاستفتاء الكوني...' : 'Universe survey question...'}
+                    placeholder={tText('سؤال الاستفتاء الكوني...', 'Universe survey question...')}
                     className="glass-input w-full p-1.5 text-xs rounded-lg"
                   />
                   <div className="grid grid-cols-2 gap-2">
@@ -762,7 +765,7 @@ export default function Home() {
                       : 'border-[#E6EAF0] dark:border-[#2A3447] bg-white dark:bg-[#182232] text-[#6E7685] dark:text-[#94A3B8] hover:text-[#1A1F2C] dark:hover:text-[#F8FAFC]'
                   }`}
                 >
-                  {lang === 'ar' ? f.labelAr : f.labelEn}
+                  {tText(f.labelAr, f.labelEn)}
                 </button>
               ))}
             </div>

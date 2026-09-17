@@ -325,15 +325,40 @@ function SocialAndGuestActions({
   const { playSynthSound, setCurrentUser } = useApp();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    let isMounted = true;
+    const checkRedirect = async () => {
+      try {
+        const user = await authService.completeRedirectSignIn();
+        if (user && isMounted) {
+          setCurrentUser(user);
+          if (playSynthSound) playSynthSound(880, 'sine', 0.2);
+          navigate('/home');
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          if (playSynthSound) playSynthSound(150, 'sawtooth', 0.2);
+          setError(err?.message || (isAr ? 'فشل إكمال تسجيل الدخول' : 'Sign-in failed'));
+        }
+      }
+    };
+    checkRedirect();
+    return () => {
+      isMounted = false;
+    };
+  }, [isAr, navigate, playSynthSound, setCurrentUser, setError]);
+
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
     if (playSynthSound) playSynthSound(600, 'sine', 0.08);
     try {
       const user = await authService.signInWithGoogle();
-      setCurrentUser(user);
-      if (playSynthSound) playSynthSound(880, 'sine', 0.2);
-      navigate('/home');
+      if (user) {
+        setCurrentUser(user);
+        if (playSynthSound) playSynthSound(880, 'sine', 0.2);
+        navigate('/home');
+      }
     } catch (err: any) {
       if (playSynthSound) playSynthSound(150, 'sawtooth', 0.2);
       setError(err?.message || (isAr ? 'فشل تسجيل الدخول بواسطة Google' : 'Google sign-in failed'));
@@ -348,9 +373,11 @@ function SocialAndGuestActions({
     if (playSynthSound) playSynthSound(600, 'sine', 0.08);
     try {
       const user = await authService.signInWithApple();
-      setCurrentUser(user);
-      if (playSynthSound) playSynthSound(880, 'sine', 0.2);
-      navigate('/home');
+      if (user) {
+        setCurrentUser(user);
+        if (playSynthSound) playSynthSound(880, 'sine', 0.2);
+        navigate('/home');
+      }
     } catch (err: any) {
       if (playSynthSound) playSynthSound(150, 'sawtooth', 0.2);
       setError(err?.message || (isAr ? 'فشل تسجيل الدخول بواسطة Apple' : 'Apple sign-in failed'));

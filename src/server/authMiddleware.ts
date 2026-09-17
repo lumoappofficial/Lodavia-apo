@@ -107,7 +107,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     let isAnonymous = false;
 
     // Support safe testing tokens in development / test suites
-    if (process.env.NODE_ENV !== 'production' && token.startsWith('mock_test_token_')) {
+    if (process.env.NODE_ENV !== 'production' && process.env.ALLOW_TEST_TOKENS === 'true' && token.startsWith('mock_test_token_')) {
       if (token === 'mock_test_token_revoked') {
         const err: any = new Error('Token has been revoked');
         err.code = 'auth/id-token-revoked';
@@ -292,7 +292,7 @@ export async function verifyAppCheck(req: Request, res: Response, next: NextFunc
   }
 
   try {
-    if (process.env.NODE_ENV !== 'production' && appCheckToken.startsWith('dev_mock_appcheck_token_')) {
+    if (process.env.NODE_ENV !== 'production' && process.env.ALLOW_TEST_TOKENS === 'true' && appCheckToken.startsWith('dev_mock_appcheck_token_')) {
       req.appCheck = {
         appId: 'com.lodavia.app.dev',
         valid: true

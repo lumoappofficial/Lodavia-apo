@@ -62,7 +62,10 @@ export default function MarkdownRenderer({ text, fontSizeClass = "text-xs" }: Ma
   };
 
   const renderTextWithFormatting = (line: string) => {
-    let result = line;
+    let result = line
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
     // Replace markdown bold **text** with strong tag
     result = result.replace(/\*\*([\s\S]*?)\*\*/g, '<strong class="font-bold text-slate-900 dark:text-white">$1</strong>');
     // Replace markdown inline code `code` with code tag

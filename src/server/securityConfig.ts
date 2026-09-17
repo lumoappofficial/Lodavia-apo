@@ -25,7 +25,21 @@ export function logSecurityEvent(type: string, details: Record<string, any>) {
  * without breaking Capacitor mobile wrappers, Three.js WebGL canvases, or external CDN models.
  */
 export const helmetMiddleware = helmet({
-  contentSecurityPolicy: false, // Prevents blocking Three.js model loaders & Firebase asset CDN
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
+    useDefaults: false,
+    reportOnly: false,
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+      mediaSrc: ["'self'", 'https://cdn.pixabay.com', 'blob:'],
+      connectSrc: ["'self'", 'https://*.googleapis.com', 'https://*.google.com', 'wss://*.firebaseio.com', 'https://unpkg.com'],
+      frameSrc: ['https://*.firebaseapp.com', 'https://www.google.com'],
+      workerSrc: ["'self'", 'blob:']
+    }
+  } : false,
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   frameguard: { action: 'sameorigin' },
