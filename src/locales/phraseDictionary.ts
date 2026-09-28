@@ -538,15 +538,6 @@ export const PHRASE_DICTIONARY: Record<string, MultiLangPhrase> = {
     zh: '已屏蔽',
     ja: 'ブロック済み'
   },
-  'متصل الآن': {
-    ar: 'متصل الآن',
-    en: 'Online',
-    fr: 'En ligne',
-    es: 'En línea',
-    de: 'Online',
-    zh: '在线',
-    ja: 'オンライン'
-  },
   'متصل بالشبكة': {
     ar: 'متصل بالشبكة',
     en: 'Online',
@@ -555,33 +546,6 @@ export const PHRASE_DICTIONARY: Record<string, MultiLangPhrase> = {
     de: 'Online',
     zh: '在线',
     ja: 'オンライン'
-  },
-  'غير متصل': {
-    ar: 'غير متصل',
-    en: 'Offline',
-    fr: 'Hors ligne',
-    es: 'Desconectado',
-    de: 'Offline',
-    zh: '离线',
-    ja: 'オフライン'
-  },
-  'يكتب الآن...': {
-    ar: 'يكتب الآن...',
-    en: 'Typing...',
-    fr: 'Écrit...',
-    es: 'Escribiendo...',
-    de: 'Schreibt...',
-    zh: '正在输入...',
-    ja: '入力中...'
-  },
-  'محظور': {
-    ar: 'محظور',
-    en: 'Blocked',
-    fr: 'Bloqué',
-    es: 'Bloqueado',
-    de: 'Blockiert',
-    zh: '已屏蔽',
-    ja: 'ブロック中'
   },
   'تم حظر المستخدم': {
     ar: 'تم حظر المستخدم',
@@ -636,15 +600,6 @@ export const PHRASE_DICTIONARY: Record<string, MultiLangPhrase> = {
     de: 'Im Chat suchen',
     zh: '在聊天中搜索',
     ja: 'チャット内を検索'
-  },
-  'خيارات وإعدادات المحادثة (•••)': {
-    ar: 'خيارات وإعدادات المحادثة (•••)',
-    en: 'Chat Settings & Options (•••)',
-    fr: 'Paramètres et options du chat (•••)',
-    es: 'Ajustes y opciones del chat (•••)',
-    de: 'Chat-Optionen und Einstellungen (•••)',
-    zh: '聊天设置与选项 (•••)',
-    ja: 'チャット設定＆オプション (•••)'
   },
   'اليوم': {
     ar: 'اليوم',

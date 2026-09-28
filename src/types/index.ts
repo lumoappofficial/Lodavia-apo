@@ -132,6 +132,7 @@ export interface ChatMessage {
   reactions?: { [emoji: string]: string[] }; // emoji -> senderIds
   isEdited?: boolean;
   isDeleted?: boolean;
+  isSticker?: boolean;
   status?: 'sending' | 'delivered' | 'read';
 }
 
@@ -139,12 +140,14 @@ export interface ChatConversation {
   id: string;
   contactName: string;
   contactAvatar: string;
+  contactId?: string;
   isOnline: boolean;
   unreadCount: number;
   messages: ChatMessage[];
   isVerified?: boolean;
   isTyping?: boolean;
   lastSeen?: string;
+  lastActive?: any;
   isPinned?: boolean;
   pinned?: boolean;
   isMuted?: boolean;
@@ -222,6 +225,29 @@ export interface Fact {
   usefulBy?: string[];
   notUsefulBy?: string[];
   comments?: FactComment[];
+}
+
+// ===============================================================
+// Unified Saved Items System
+// ===============================================================
+export type SavedItemType = 'post' | 'reel' | 'video';
+
+export interface SavedItemPreview {
+  title?: string;
+  contentSnippet?: string;
+  thumbnailUrl?: string;
+  authorName?: string;
+  authorAvatar?: string;
+  timestamp?: string;
+  extraMeta?: Record<string, any>;
+}
+
+export interface SavedItem {
+  id: string; // `${itemType}_${itemId}`
+  itemType: SavedItemType;
+  itemId: string;
+  savedAt: string; // ISO timestamp
+  preview?: SavedItemPreview;
 }
 
 export * from './lodaviaNow';

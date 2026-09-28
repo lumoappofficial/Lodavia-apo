@@ -9,9 +9,13 @@ import {
   Play, 
   Check, 
   Vote, 
-  Loader2 
+  Loader2,
+  Copy,
+  Send,
+  Link as LinkIcon
 } from 'lucide-react';
 import { FeedPostType } from '../types';
+import { copyToClipboard } from '../utils/helpers';
 
 interface FeedPostProps {
   key?: React.Key;
@@ -39,6 +43,54 @@ export default function FeedPost({
 }: FeedPostProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedReplyId, setCopiedReplyId] = useState<string | null>(null);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [comments, setComments] = useState<Array<{ id: string; author: string; text: string; time: string }>>([
+    {
+      id: `${post.id}_c1`,
+      author: lang === 'ar' ? 'سارة المهندس' : 'Sarah Dev',
+      text: lang === 'ar' ? 'منشور رائع ومحتوى متميز ومفيد جداً! 👏' : 'Great insights and remarkable perspective! 👏',
+      time: lang === 'ar' ? 'منذ 10 د' : '10m ago'
+    },
+    {
+      id: `${post.id}_c2`,
+      author: lang === 'ar' ? 'أحمد الشمري' : 'Ahmed Astro',
+      text: lang === 'ar' ? 'أتفق تماماً مع هذه النقطة، شكراً على المشاركة 🚀' : 'Totally agree on this point, thanks for sharing 🚀',
+      time: lang === 'ar' ? 'منذ 5 د' : '5m ago'
+    }
+  ]);
+
+  const handleAddComment = () => {
+    if (!newCommentText.trim()) return;
+    playSynthSound(800, 'sine', 0.08);
+    const newComment = {
+      id: `c_${Date.now()}`,
+      author: lang === 'ar' ? 'أنت' : 'You',
+      text: newCommentText.trim(),
+      time: lang === 'ar' ? 'الآن' : 'Just now'
+    };
+    setComments(prev => [...prev, newComment]);
+    setNewCommentText('');
+  };
+
+  const handleCopyReply = async (replyId: string, replyText: string) => {
+    playSynthSound(850, 'sine', 0.08);
+    await copyToClipboard(replyText);
+    setCopiedReplyId(replyId);
+    setTimeout(() => {
+      setCopiedReplyId(null);
+    }, 2000);
+  };
+
+  const handleCopyPostLink = async () => {
+    playSynthSound(750, 'sine', 0.08);
+    const link = `${window.location.origin}/post/${post.id}`;
+    await copyToClipboard(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
 
   // Helper to parse hashtags and style them dynamically
   const renderContent = (text: string) => {
@@ -69,6 +121,7 @@ export default function FeedPost({
 
   return (
     <motion.div 
+      id={`post-${post.id}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
@@ -243,16 +296,39 @@ export default function FeedPost({
           <button
             onClick={() => {
               playSynthSound(600, 'sine', 0.05);
-              alert(lang === 'ar' ? 'منطقة النقاش تحت التأسيس العصبي' : 'Discussion zone synching offline');
+              setShowComments(prev => !prev);
             }}
-            className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 text-[10px] font-bold transition-all hover:scale-115 cursor-pointer"
+            className={`flex items-center gap-1.5 text-[10px] font-bold transition-all hover:scale-115 cursor-pointer ${
+              showComments ? 'text-sky-500' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+            }`}
+            title={lang === 'ar' ? 'عرض الردود والتعليقات' : 'View replies & comments'}
           >
             <MessageSquare className="w-4 h-4" />
-            <span>{post.commentsCount}</span>
+            <span>{comments.length}</span>
           </button>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-1.5">
+          {/* Copy Link Button */}
+          <motion.button
+            whileTap={{ scale: 0.8 }}
+            onClick={handleCopyPostLink}
+            className="flex items-center gap-1 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-sky-500 dark:hover:text-cyan-400 transition-all cursor-pointer"
+            title={lang === 'ar' ? 'نسخ رابط المنشور' : 'Copy post link'}
+          >
+            {copiedLink ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-500" />
+                <span className="text-[10px] font-bold text-emerald-500 hidden sm:inline">{lang === 'ar' ? 'تم النسخ' : 'Copied'}</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                <span className="text-[10px] font-bold hidden sm:inline">{lang === 'ar' ? 'نسخ الرابط' : 'Copy link'}</span>
+              </>
+            )}
+          </motion.button>
+
           <motion.button
             whileTap={{ scale: 0.8 }}
             onClick={() => onSave(post.id)}
@@ -274,6 +350,84 @@ export default function FeedPost({
           </motion.button>
         </div>
       </div>
+
+      {/* Interactive Comments & Replies Drawer */}
+      {showComments && (
+        <motion.div 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2.5"
+        >
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">
+              {lang === 'ar' ? 'الردود والتعليقات' : 'Replies & Discussion'} ({comments.length})
+            </span>
+            <span className="text-[9px] text-slate-400 dark:text-slate-500">
+              {lang === 'ar' ? 'يمكنك نسخ أي رد بضغطة واحدة' : 'Copy any reply with 1-click'}
+            </span>
+          </div>
+
+          {/* Comments list */}
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            {comments.map((comment) => (
+              <div 
+                key={comment.id}
+                className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 flex items-start justify-between gap-2 group/comment"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-black text-slate-900 dark:text-white/90">{comment.author}</span>
+                    <span className="text-[8px] text-slate-400 dark:text-slate-500">{comment.time}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-700 dark:text-slate-300 mt-0.5 leading-relaxed break-words">
+                    {comment.text}
+                  </p>
+                </div>
+
+                {/* Copy Reply Button */}
+                <button
+                  onClick={() => handleCopyReply(comment.id, comment.text)}
+                  className="p-1.5 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-sky-500 transition-all shrink-0 flex items-center gap-1 cursor-pointer"
+                  title={lang === 'ar' ? 'نسخ الرد' : 'Copy reply'}
+                >
+                  {copiedReplyId === comment.id ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-[9px] font-bold text-emerald-500">{lang === 'ar' ? 'تم النسخ' : 'Copied'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span className="text-[9px] font-medium hidden sm:inline">{lang === 'ar' ? 'نسخ الرد' : 'Copy'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* New Comment Input */}
+          <div className="flex gap-1.5 pt-1">
+            <input
+              type="text"
+              value={newCommentText}
+              onChange={(e) => setNewCommentText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(); }}
+              placeholder={lang === 'ar' ? 'أضف رداً أو تعليقاً...' : 'Write a reply...'}
+              className="flex-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-sky-500"
+            />
+            <button
+              onClick={handleAddComment}
+              className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1 transition-all active:scale-95 cursor-pointer shadow-sm"
+              title={lang === 'ar' ? 'إرسال الرد' : 'Send reply'}
+            >
+              <Send className="w-3 h-3" />
+              <span className="hidden sm:inline">{lang === 'ar' ? 'رد' : 'Reply'}</span>
+            </button>
+          </div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

@@ -63,7 +63,6 @@ import { themeStyles } from '../styles/theme';
 import rayAvatarIcon from '../assets/images/ray_avatar_icon_1787258127988.jpg';
 import LodaviaMascot from '../components/LodaviaMascot';
 import { useGestureNavigation } from '../hooks/useGestureNavigation';
-import FullScreenCameraModal from '../components/camera/FullScreenCameraModal';
 import CameraEdgeHandle from '../components/camera/CameraEdgeHandle';
 
 // Unified modern page transition variants (fade-in + subtle 8px rise, fast fade-out)
@@ -152,6 +151,7 @@ export default function DashboardLayout() {
     setStoreMessage,
     activeCall,
     setActiveCall,
+    activeChat,
     startWatchingAd,
     claimAdReward,
     handlePurchaseItem,
@@ -163,6 +163,33 @@ export default function DashboardLayout() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Hide mobile bottom navigation bar when an individual chat is actively open
+  const isIndividualChatOpen = location.pathname.startsWith('/messages') && !!activeChat;
+
+  // Track if mobile reels view is active to hide global header seamlessly on mobile
+  const [isMobileReelsActive, setIsMobileReelsActive] = useState(() => {
+    return location.pathname.startsWith('/media') && new URLSearchParams(window.location.search).get('tab') !== 'videos' && new URLSearchParams(window.location.search).get('tab') !== 'live';
+  });
+
+  useEffect(() => {
+    const handleReelsActiveEvent = (e: any) => {
+      if (typeof e.detail?.active === 'boolean') {
+        setIsMobileReelsActive(e.detail.active);
+      }
+    };
+    window.addEventListener('lodavia_mobile_reels_active', handleReelsActiveEvent);
+    return () => {
+      window.removeEventListener('lodavia_mobile_reels_active', handleReelsActiveEvent);
+    };
+  }, []);
+
+  // Update on route changes
+  useEffect(() => {
+    if (!location.pathname.startsWith('/media')) {
+      setIsMobileReelsActive(false);
+    }
+  }, [location.pathname]);
 
   // Desktop sidebar collapse state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -202,9 +229,6 @@ export default function DashboardLayout() {
   const mainRef = useRef<HTMLElement>(null);
   const isRtl = lang === 'ar';
 
-  // Full-Screen Immersive Camera Modal State
-  const [isFullScreenCameraOpen, setIsFullScreenCameraOpen] = useState(false);
-
   // Gesture Navigation Hook: Horizontal swipe between Main sections & Edge swipe for camera
   const {
     isMainSection,
@@ -217,7 +241,7 @@ export default function DashboardLayout() {
     enabled: true,
     onOpenGlobalCamera: () => {
       playSynthSound(750, 'sine', 0.1);
-      setIsFullScreenCameraOpen(true);
+      navigate('/camera-studio');
     },
     lang
   });
@@ -270,7 +294,7 @@ export default function DashboardLayout() {
   const storeItems = STORE_ITEMS;
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row w-full min-h-screen relative z-10 animate-[fadeIn_0.5s_ease-out]">
+    <div className={`flex-1 flex flex-col lg:flex-row w-full ${isMobileReelsActive ? 'h-dvh overflow-hidden md:h-auto md:min-h-screen' : 'min-h-screen'} relative z-10 animate-[fadeIn_0.5s_ease-out]`}>
       {/* Instant Navigation Top Progress Bar */}
       <PageTopProgressBar pathname={location.pathname} />
       
@@ -490,10 +514,12 @@ export default function DashboardLayout() {
       </aside>
 
       {/* ----------------- MAIN WRAPPER ----------------- */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0 ${isMobileReelsActive ? 'h-dvh overflow-hidden md:h-auto' : ''}`}>
 
         {/* TOP HEADER BAR */}
-        <header className="sticky top-0 z-30 w-full bg-white/95 dark:bg-[#0B1220]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-sky-500/15 py-2 px-2.5 sm:px-6 lg:px-8 shadow-xs text-[#0F172A] dark:text-slate-100 transition-colors">
+        <header className={`${
+          isMobileReelsActive ? 'hidden md:block' : 'block'
+        } sticky top-0 z-30 w-full bg-white/95 dark:bg-[#0B1220]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-sky-500/15 py-2 px-2.5 sm:px-6 lg:px-8 shadow-xs text-[#0F172A] dark:text-slate-100 transition-colors`}>
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 py-0.5">
             
             {/* Left: Brand Logo (for Mobile & Tablet) / Desktop Weather & Language */}
@@ -743,7 +769,7 @@ export default function DashboardLayout() {
                           onClick={() => {
                             playSynthSound(650, 'sine', 0.08);
                             setShowSettingsMenu(false);
-                            setIsFullScreenCameraOpen(true);
+                            navigate('/camera-studio');
                           }}
                           className="flex flex-col items-center gap-1 p-2 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-sky-500/10 text-slate-700 dark:text-slate-300 transition-all text-center cursor-pointer border border-transparent hover:border-sky-400/30"
                           title={tText('استوديو الكاميرا', 'Camera Studio')}
@@ -924,7 +950,16 @@ export default function DashboardLayout() {
         </header>
 
         {/* CORE CONTENT ROUTE OUTLET WITH SMOOTH PAGE TRANSITIONS */}
-        <main ref={mainRef} className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto pb-24 lg:pb-8">
+        <main 
+          ref={mainRef} 
+          className={`flex-1 max-w-7xl mx-auto w-full ${
+            isMobileReelsActive 
+              ? 'p-0 md:px-6 md:py-6 overflow-hidden md:overflow-y-auto pb-[68px] md:pb-8 h-full flex flex-col' 
+              : isIndividualChatOpen 
+                ? 'px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto pb-2 lg:pb-8' 
+                : 'px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto pb-24 lg:pb-8'
+          }`}
+        >
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
@@ -932,7 +967,7 @@ export default function DashboardLayout() {
               initial="initial"
               animate="animate"
               exit="exit"
-              className="w-full"
+              className={`w-full ${isMobileReelsActive ? 'h-full flex-1 flex flex-col min-h-0' : ''}`}
             >
               <Outlet />
             </motion.div>
@@ -942,8 +977,9 @@ export default function DashboardLayout() {
       </div>
 
       {/* ----------------- MOBILE & TABLET BOTTOM NAVIGATION BAR (lg:hidden) ----------------- */}
-      <nav className="lg:hidden fixed bottom-3 inset-x-2.5 z-40 glass-panel border border-sky-500/20 dark:border-sky-500/20 rounded-3xl p-1.5 shadow-2xl backdrop-blur-xl bg-white/95 dark:bg-[#0B1220]/95 text-slate-800 dark:text-slate-200">
-        <div className="flex justify-between items-center relative px-0.5">
+      {!isIndividualChatOpen && (
+        <nav className="lg:hidden fixed bottom-2 inset-x-3 z-40 border border-slate-200/80 dark:border-white/10 rounded-2xl py-1.5 px-3 shadow-lg backdrop-blur-xl bg-white/95 dark:bg-[#0B1220]/95 text-slate-800 dark:text-slate-200 animate-[fadeIn_0.15s_ease-out]">
+          <div className="flex justify-around items-center relative">
           
           {/* Tab 1: Home (الرئيسية) */}
           <button 
@@ -951,14 +987,18 @@ export default function DashboardLayout() {
               playSynthSound(500, 'sine', 0.05);
               navigate('/home');
             }}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-2xl transition-all ${
+            className={`flex flex-col items-center justify-center p-1.5 transition-colors relative ${
               activeTab === 'home' 
-                ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 font-black' 
+                ? 'text-sky-600 dark:text-sky-400' 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
+            aria-label={tText('الرئيسية', 'Home')}
+            title={tText('الرئيسية', 'Home')}
           >
-            <Home className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-[8.5px] font-bold tracking-tight">{tText('الرئيسية', 'Home')}</span>
+            <Home className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={activeTab === 'home' ? 2.5 : 1.8} />
+            {activeTab === 'home' && (
+              <span className="w-1 h-1 rounded-full bg-sky-600 dark:bg-sky-400 mt-1 absolute -bottom-0.5" />
+            )}
           </button>
 
           {/* Tab 2: Media (المرئيات) */}
@@ -968,33 +1008,38 @@ export default function DashboardLayout() {
               playSynthSound(500, 'sine', 0.05);
               navigate('/media');
             }}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-2xl transition-all ${
+            className={`flex flex-col items-center justify-center p-1.5 transition-colors relative ${
               activeTab === 'media' 
-                ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 font-black' 
+                ? 'text-sky-600 dark:text-sky-400' 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
+            aria-label={tText('المرئيات', 'Media')}
+            title={tText('المرئيات', 'Media')}
           >
-            <Film className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-[8.5px] font-bold tracking-tight">{tText('المرئيات', 'Media')}</span>
+            <Film className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={activeTab === 'media' ? 2.5 : 1.8} />
+            {activeTab === 'media' && (
+              <span className="w-1 h-1 rounded-full bg-sky-600 dark:bg-sky-400 mt-1 absolute -bottom-0.5" />
+            )}
           </button>
 
           {/* Central Lumo Button (3D Ray Face Avatar) */}
-          <div className="relative -mt-6 px-1 shrink-0 flex flex-col items-center justify-center">
-            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-sky-500/40 via-blue-600/30 to-cyan-500/40 blur-md animate-pulse pointer-events-none" />
+          <div className="relative -mt-4 px-1 shrink-0 flex flex-col items-center justify-center">
+            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-sky-500/30 via-blue-600/20 to-cyan-500/30 blur-md pointer-events-none" />
             <button 
               onClick={() => {
                 playSynthSound(600, 'sine', 0.1);
                 navigate('/lumo');
               }}
-              className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all cursor-pointer shadow-xl relative group active:scale-95 shrink-0 bg-slate-900 dark:bg-[#0B1220] flex items-center justify-center ${
+              className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden border-2 transition-all cursor-pointer shadow-md relative group active:scale-95 shrink-0 bg-slate-900 dark:bg-[#0B1220] flex items-center justify-center ${
                 activeTab === 'lumo'
-                  ? 'border-sky-400 ring-4 ring-sky-500/30 scale-105'
-                  : 'border-sky-500/60 hover:border-sky-400 hover:scale-105'
+                  ? 'border-sky-400 ring-2 ring-sky-500/40 scale-105'
+                  : 'border-sky-500/50 hover:border-sky-400'
               }`}
               title="Lumo - راي ورفيق الفضاء"
+              aria-label="Lumo"
             >
               <LodaviaMascot
-                size={42}
+                size={34}
                 animated={true}
                 interactive={false}
                 showAura={false}
@@ -1002,11 +1047,9 @@ export default function DashboardLayout() {
                 className="pointer-events-none group-hover:scale-110 transition-transform duration-300"
               />
             </button>
-            <span className={`text-[8.5px] font-black tracking-tight mt-0.5 ${
-              activeTab === 'lumo' ? 'text-sky-500 dark:text-sky-400 font-extrabold' : 'text-slate-500 dark:text-slate-400'
-            }`}>
-              Lumo
-            </span>
+            {activeTab === 'lumo' && (
+              <span className="w-1 h-1 rounded-full bg-sky-500 dark:bg-sky-400 mt-0.5" />
+            )}
           </div>
 
           {/* Tab 4: Messages / Chat (الدردشة / الرسائل) */}
@@ -1015,19 +1058,23 @@ export default function DashboardLayout() {
               playSynthSound(500, 'sine', 0.05);
               navigate('/messages');
             }}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-2xl transition-all ${
+            className={`flex flex-col items-center justify-center p-1.5 transition-colors relative ${
               activeTab === 'messages' 
-                ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 font-black' 
+                ? 'text-sky-600 dark:text-sky-400' 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
+            aria-label={tText('الرسائل', 'Messages')}
+            title={tText('الرسائل', 'Messages')}
           >
             <div className="relative">
-              <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 rounded-full bg-sky-600 text-white text-[8px] font-black flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={activeTab === 'messages' ? 2.5 : 1.8} />
+              <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-1 rounded-full bg-sky-600 text-white text-[8px] font-black flex items-center justify-center leading-none">
                 2
               </span>
             </div>
-            <span className="text-[8.5px] font-bold tracking-tight">{tText('الرسائل', 'Messages')}</span>
+            {activeTab === 'messages' && (
+              <span className="w-1 h-1 rounded-full bg-sky-600 dark:bg-sky-400 mt-1 absolute -bottom-0.5" />
+            )}
           </button>
 
           {/* Tab 5: Profile (الملف الشخصي) */}
@@ -1037,34 +1084,37 @@ export default function DashboardLayout() {
               playSynthSound(500, 'sine', 0.05);
               navigate('/profile');
             }}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-2xl transition-all ${
+            className={`flex flex-col items-center justify-center p-1.5 transition-colors relative ${
               activeTab === 'profile' 
-                ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 font-black' 
+                ? 'text-sky-600 dark:text-sky-400' 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
+            aria-label={tText('الملف الشخصي', 'Profile')}
+            title={tText('الملف الشخصي', 'Profile')}
           >
             <div className="relative flex items-center justify-center">
               {currentUser?.avatar ? (
                 <img 
                   src={currentUser.avatar} 
                   alt={currentUser.name || 'Profile'} 
-                  className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover border transition-all ${
+                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover transition-all ${
                     activeTab === 'profile' 
-                      ? 'border-sky-500 ring-2 ring-sky-500/30 shadow-xs' 
-                      : 'border-slate-300 dark:border-slate-600'
+                      ? 'ring-2 ring-sky-500 dark:ring-sky-400' 
+                      : 'opacity-85 hover:opacity-100'
                   }`}
                 />
               ) : (
-                <User className="w-4 h-4 sm:w-5 sm:h-5" />
+                <User className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={activeTab === 'profile' ? 2.5 : 1.8} />
               )}
             </div>
-            <span className="text-[8.5px] font-bold tracking-tight whitespace-nowrap">
-              {tText('الملف الشخصي', 'Profile')}
-            </span>
+            {activeTab === 'profile' && (
+              <span className="w-1 h-1 rounded-full bg-sky-600 dark:bg-sky-400 mt-1 absolute -bottom-0.5" />
+            )}
           </button>
 
         </div>
       </nav>
+      )}
 
       {/* ----------------- GLOBAL CREATIVE MODAL (➕) ----------------- */}
       {showCreateModal && (
@@ -1097,7 +1147,7 @@ export default function DashboardLayout() {
                       playSynthSound(500, 'sine', 0.05);
                       if (opt.id === 'camera') {
                         setShowCreateModal(false);
-                        setIsFullScreenCameraOpen(true);
+                        navigate('/camera-studio');
                         return;
                       }
                       if (opt.id === 'project') {
@@ -1482,11 +1532,11 @@ export default function DashboardLayout() {
       )}
 
       {/* ----------------- MOBILE EDGE SWIPE CAMERA HANDLE ----------------- */}
-      {isMainSection && !isFullScreenCameraOpen && (
+      {isMainSection && (
         <CameraEdgeHandle
           onOpen={() => {
             playSynthSound(700, 'sine', 0.08);
-            setIsFullScreenCameraOpen(true);
+            navigate('/camera-studio');
           }}
           isEdgeSwiping={isEdgeSwipingCamera}
           edgeProgress={cameraEdgeProgress}
@@ -1505,12 +1555,6 @@ export default function DashboardLayout() {
           style={{ width: '8px' }}
         />
       )}
-
-      {/* ----------------- FULL-SCREEN IMMERSIVE LODAVIA CAMERA ----------------- */}
-      <FullScreenCameraModal
-        isOpen={isFullScreenCameraOpen}
-        onClose={() => setIsFullScreenCameraOpen(false)}
-      />
 
     </div>
   );

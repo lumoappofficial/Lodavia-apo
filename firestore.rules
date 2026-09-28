@@ -105,6 +105,11 @@ service cloud.firestore {
       match /ai_history/{historyId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Saved items subcollection (posts, reels, videos) - strictly private to owner
+      match /savedItems/{itemId} {
+        allow read, write, delete: if isOwner(userId);
+      }
     }
 
     // ===============================================================

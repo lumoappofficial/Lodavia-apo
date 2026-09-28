@@ -128,12 +128,29 @@
         "comments": { "type": "array" }
       },
       "required": ["id", "date", "textAr", "textEn", "category", "sourceName", "sourceUrl"]
+    },
+    "SavedItem": {
+      "title": "Saved Item",
+      "description": "A bookmarked post, reel, or video saved by a user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "itemType": { "type": "string" },
+        "itemId": { "type": "string" },
+        "savedAt": { "type": "string" },
+        "preview": { "type": "object" }
+      },
+      "required": ["itemType", "itemId", "savedAt"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
       "description": "User profiles and account settings"
+    },
+    "/users/{userId}/savedItems/{itemId}": {
+      "schema": "SavedItem",
+      "description": "Saved posts, reels, and video bookmarks for the user"
     },
     "/communities/{communityId}": {
       "schema": "Community",

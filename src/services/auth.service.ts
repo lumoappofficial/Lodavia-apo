@@ -21,7 +21,8 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   updatePassword,
-  deleteUser
+  deleteUser,
+  onAuthStateChanged
 } from 'firebase/auth';
 import { 
   doc, 
@@ -86,6 +87,11 @@ export const authService = {
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const fbUser = userCredential.user;
+
+        if (!fbUser.emailVerified) {
+          await signOut(auth);
+          throw new Error("يرجى تأكيد بريدك الإلكتروني أولاً عبر الرابط المرسل إلى بريدك، ثم حاول تسجيل الدخول مرة أخرى.");
+        }
         
         let userDoc;
         try {
@@ -320,6 +326,27 @@ export const authService = {
     } catch (err: any) {
       throw new Error(err.message || "خطأ أثناء إكمال تسجيل الدخول عبر التوجيه.");
     }
+  },
+
+  // Fallback safety net listener for OAuth redirect delay
+  subscribeToAuthProviderSignIn: (callback: (user: AppUser) => void): (() => void) => {
+    if (!isFirebaseConfigured || !auth) {
+      return () => {};
+    }
+    return onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        const providerId = fbUser.providerData?.[0]?.providerId || '';
+        if (providerId === 'google.com' || providerId === 'apple.com') {
+          try {
+            const providerType = providerId === 'apple.com' ? 'apple' : 'google';
+            const syncedUser = await syncOAuthUser(fbUser, providerType);
+            callback(syncedUser);
+          } catch (err) {
+            console.error('[subscribeToAuthProviderSignIn error]:', err);
+          }
+        }
+      }
+    });
   },
 
   // Phone Authentication: reCAPTCHA initialization

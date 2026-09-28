@@ -159,7 +159,14 @@ export function ChatInput({
     { id: 'super_like', nameAr: 'إعجاب فائق 🔥', nameEn: 'Super Like 🔥', emoji: '🔥', url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=300' },
     { id: 'space_cat', nameAr: 'قط الفضاء 🐱', nameEn: 'Space Cat 🐱', emoji: '🐱', url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300' },
     { id: 'coffee_astronaut', nameAr: 'قهوة الفضاء ☕', nameEn: 'Astronaut Coffee ☕', emoji: '☕', url: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=300' },
-    { id: 'crown_king', nameAr: 'تاج الأسطورة 👑', nameEn: 'Legend Crown 👑', emoji: '👑', url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=300' }
+    { id: 'crown_king', nameAr: 'تاج الأسطورة 👑', nameEn: 'Legend Crown 👑', emoji: '👑', url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=300' },
+    { id: 'emo_angry', nameAr: 'غضب 😠', nameEn: 'Angry 😠', emoji: '😠', url: 'https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/😠_3d.png' },
+    { id: 'emo_dislike', nameAr: 'رفض 👎', nameEn: 'Dislike 👎', emoji: '👎', url: 'https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/👎_3d.png' },
+    { id: 'emo_thinking', nameAr: 'تفكير 🤔', nameEn: 'Thinking 🤔', emoji: '🤔', url: 'https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/🤔_3d.png' },
+    { id: 'emo_celebrate', nameAr: 'احتفال 🎉', nameEn: 'Celebrate 🎉', emoji: '🎉', url: 'https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/🎉_3d.png' },
+    { id: 'emo_wink', nameAr: 'غمزة 😉', nameEn: 'Wink 😉', emoji: '😉', url: 'https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/😉_3d.png' },
+    { id: 'emo_sleepy', nameAr: 'نعسان 😴', nameEn: 'Sleepy 😴', emoji: '😴', url: 'https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/😴_3d.png' },
+    { id: 'emo_heartbreak', nameAr: 'قلب مكسور 💔', nameEn: 'Heartbreak 💔', emoji: '💔', url: 'https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/💔_3d.png' }
   ];
 
   return (
@@ -234,6 +241,31 @@ export function ChatInput({
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+          {/* Quick Responses Bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5 scroll-smooth">
+            {[
+              'واو 😯',
+              'حزن 😢',
+              'حب ❤️',
+              'ضحك 😂',
+              'مرحبًا 👋',
+              'مبروك 🎉',
+              'رائع 🔥'
+            ].map((quickText) => (
+              <button
+                key={quickText}
+                type="button"
+                onClick={() => {
+                  playSynthSound(600, 'sine', 0.05);
+                  onSendMessage(quickText, 'text');
+                  onTypingChange(false);
+                }}
+                className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-900/60 hover:bg-slate-200 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/10 transition-all active:scale-95 cursor-pointer shadow-2xs"
+              >
+                {quickText}
+              </button>
+            ))}
+          </div>
           
           <div className="flex items-center gap-1.5 p-1.5 sm:p-2 rounded-2xl bg-slate-100/85 dark:bg-[#121c2d]/85 border border-slate-200/80 dark:border-white/10 shadow-xs backdrop-blur-xl focus-within:border-cyan-500/50 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all">
             

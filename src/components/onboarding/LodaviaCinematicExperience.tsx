@@ -115,7 +115,9 @@ export default function LodaviaCinematicExperience({
     setAuthLoading(true);
     try {
       const user = await authService.signInWithGoogle();
-      setCurrentUser(user);
+      if (user) {
+        setCurrentUser(user);
+      }
       if (playSynthSound) playSynthSound(880, 'sine', 0.2);
       setAuthModal(null);
       if (onFinishedExperience) {

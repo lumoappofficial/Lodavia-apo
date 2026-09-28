@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import FeedPostCard from '../components/FeedPost';
 import { 
@@ -37,6 +37,7 @@ import {
   Newspaper,
   Globe,
   Film,
+  Clapperboard,
   ArrowRight,
   ChevronRight,
   Rocket,
@@ -48,8 +49,11 @@ import { EmptyState } from '../components/FeedbackStates';
 import FactOfTheDay from '../components/FactOfTheDay';
 import LodaviaNowCard from '../components/lodaviaNow/LodaviaNowCard';
 import RayLockerModal from '../components/RayLockerModal';
+import UploadMediaModal from '../components/UploadMediaModal';
+import { copyToClipboard } from '../utils/helpers';
 import { MascotSkin } from '../components/LodaviaMascot';
 import raySpaceDogStageImg from '../assets/images/ray_space_dog_stage_1787258113380.jpg';
+import { savedItemsService } from '../services/savedItems.service';
 
 export default function Home() {
   const {
@@ -83,6 +87,9 @@ export default function Home() {
   const [showLockerModal, setShowLockerModal] = useState(false);
   const [currentSkin, setCurrentSkin] = useState<MascotSkin>('default');
 
+  // Media Upload Modal State
+  const [showUploadMediaModal, setShowUploadMediaModal] = useState(false);
+
   // Games states
   const [quizAnswered, setQuizAnswered] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
@@ -98,6 +105,10 @@ export default function Home() {
   // RSVP registration state & toast
   const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([]);
   const [rsvpToast, setRsvpToast] = useState<string | null>(null);
+
+  // Guest bookmark notice toast (once per session)
+  const [guestSaveToast, setGuestSaveToast] = useState<string | null>(null);
+  const hasShownGuestSaveToastRef = useRef<boolean>(false);
 
   // Feed States
   const [feedFilter, setFeedFilter] = useState<'all' | 'trending' | 'suggested' | 'polls' | 'ai'>('all');
@@ -275,19 +286,118 @@ export default function Home() {
     }));
   };
 
-  // Save Toggle
+  // Load saved posts status for currentUser on mount
+  useEffect(() => {
+    const isGuest = !currentUser?.id || currentUser.isAnonymous === true || currentUser.id === 'guest';
+    const uid = currentUser?.id || 'guest';
+    let isMounted = true;
+
+    savedItemsService.getSavedItems(uid, 'post', isGuest).then(savedItems => {
+      if (!isMounted || !savedItems || savedItems.length === 0) return;
+      const savedIds = new Set(savedItems.map(item => item.itemId));
+      setFeedPosts(prev => prev.map(post => ({
+        ...post,
+        isSaved: savedIds.has(post.id) ? true : post.isSaved
+      })));
+    }).catch(err => {
+      console.warn('Error fetching saved items on Home mount:', err);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser?.id, currentUser?.isAnonymous]);
+
+  // Scroll to and highlight a specific post when navigated from SavedItemsPage
+  const location = useLocation();
+  useEffect(() => {
+    const targetPostId = (location.state as any)?.highlightPostId;
+    if (targetPostId) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`post-${targetPostId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('ring-2', 'ring-cyan-400', 'ring-offset-2', 'dark:ring-offset-slate-900', 'transition-all');
+          setTimeout(() => {
+            el.classList.remove('ring-2', 'ring-cyan-400', 'ring-offset-2', 'dark:ring-offset-slate-900');
+          }, 3000);
+        }
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
+
+  // Save Toggle (Syncs Optimistic UI & Firestore Subcollection users/{uid}/savedItems)
   const handleSavePost = (postId: string) => {
     playSynthSound(750, 'sine', 0.1);
+
+    const targetPost = feedPosts.find(p => p.id === postId);
+    if (!targetPost) return;
+
+    const willBeSaved = !targetPost.isSaved;
+
+    // 1. Optimistic UI update
     setFeedPosts(prev => prev.map(post => {
       if (post.id === postId) {
-        const saved = !post.isSaved;
         return {
           ...post,
-          isSaved: saved
+          isSaved: willBeSaved
         };
       }
       return post;
     }));
+
+    // 2. Identify guest vs real account
+    const isGuest = !currentUser?.id || currentUser.isAnonymous === true || currentUser.id === 'guest';
+    const uid = currentUser?.id || 'guest';
+
+    // 3. Gentle reminder for guest users (only once per session)
+    if (isGuest && willBeSaved && !hasShownGuestSaveToastRef.current) {
+      hasShownGuestSaveToastRef.current = true;
+      setGuestSaveToast(
+        lang === 'ar'
+          ? 'المحفوظات كضيف تبقى على هذا الجهاز فقط، سجّل حساباً لحفظها بشكل دائم 🔖'
+          : 'Guest bookmarks stay on this device only. Sign up to save permanently 🔖'
+      );
+      setTimeout(() => {
+        setGuestSaveToast(null);
+      }, 4500);
+    }
+
+    // 4. Persistent sync via savedItemsService (skips Firestore for guest accounts)
+    if (willBeSaved) {
+      savedItemsService.saveItem(
+        uid, 
+        'post', 
+        postId, 
+        {
+          title: targetPost.content?.slice(0, 50),
+          contentSnippet: targetPost.content?.slice(0, 160),
+          thumbnailUrl: targetPost.imageUrl || targetPost.videoUrl,
+          authorName: targetPost.authorName,
+          authorAvatar: targetPost.authorAvatar,
+          timestamp: targetPost.time,
+          extraMeta: {
+            category: targetPost.category,
+            type: targetPost.type,
+            likesCount: targetPost.likesCount,
+            commentsCount: targetPost.commentsCount
+          }
+        },
+        isGuest // skipFirestore
+      ).catch(err => {
+        console.warn('Background saveItem error:', err);
+      });
+    } else {
+      savedItemsService.unsaveItem(
+        uid, 
+        'post', 
+        postId, 
+        isGuest // skipFirestore
+      ).catch(err => {
+        console.warn('Background unsaveItem error:', err);
+      });
+    }
   };
 
   // Vote handler
@@ -326,12 +436,12 @@ export default function Home() {
   };
 
   // Share Simulation
-  const handleSharePost = (postId: string) => {
+  const handleSharePost = async (postId: string) => {
     playSynthSound(950, 'sine', 0.1);
     const link = `${window.location.origin}/post/${postId}`;
     setShareLink(link);
     setShowShareSuccess(true);
-    navigator.clipboard.writeText(link).catch(() => {});
+    await copyToClipboard(link);
     setTimeout(() => {
       setShowShareSuccess(false);
     }, 2500);
@@ -651,18 +761,12 @@ export default function Home() {
                 {/* Quick Action Icons in the same row */}
                 <div className="flex items-center gap-1 shrink-0">
                   <button
-                    onClick={() => {
-                      playSynthSound(600, 'sine', 0.05);
-                      setNewPostType(newPostType === 'image' ? 'text' : 'image');
-                    }}
-                    className={`p-1.5 rounded-full border transition-all cursor-pointer ${
-                      newPostType === 'image'
-                        ? 'border-[#48B8FF] bg-[#48B8FF]/15 text-[#48B8FF]'
-                        : 'border-transparent text-emerald-500 hover:bg-emerald-500/10'
-                    }`}
-                    title={tText('إرفاق صورة', 'Attach Photo')}
+                    onClick={handleCreatePost}
+                    disabled={!newPostText.trim() && !newPostPollQuestion}
+                    className="p-1.5 rounded-full bg-[#48B8FF] hover:bg-[#38A8EF] text-white disabled:opacity-40 transition-all shadow-sm cursor-pointer active:scale-95 shrink-0"
+                    title={tText('إطلاق كوني 📡', 'Cosmic Post 📡')}
                   >
-                    <ImageIcon className="w-4 h-4" />
+                    <Send className="w-3.5 h-3.5 rtl:rotate-180" />
                   </button>
 
                   <button
@@ -681,12 +785,34 @@ export default function Home() {
                   </button>
 
                   <button
-                    onClick={handleCreatePost}
-                    disabled={!newPostText.trim() && !newPostPollQuestion}
-                    className="p-1.5 rounded-full bg-[#48B8FF] hover:bg-[#38A8EF] text-white disabled:opacity-40 transition-all shadow-sm cursor-pointer active:scale-95 shrink-0"
-                    title={tText('إطلاق كوني 📡', 'Cosmic Post 📡')}
+                    onClick={() => {
+                      playSynthSound(600, 'sine', 0.05);
+                      setNewPostType(newPostType === 'image' ? 'text' : 'image');
+                    }}
+                    className={`p-1.5 rounded-full border transition-all cursor-pointer ${
+                      newPostType === 'image'
+                        ? 'border-[#48B8FF] bg-[#48B8FF]/15 text-[#48B8FF]'
+                        : 'border-transparent text-emerald-500 hover:bg-emerald-500/10'
+                    }`}
+                    title={tText('إرفاق صورة', 'Attach Photo')}
                   >
-                    <Send className="w-3.5 h-3.5 rtl:rotate-180" />
+                    <ImageIcon className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playSynthSound(600, 'sine', 0.05);
+                      setShowUploadMediaModal(true);
+                    }}
+                    className={`p-1.5 rounded-full border transition-all cursor-pointer ${
+                      showUploadMediaModal
+                        ? 'border-purple-500 bg-gradient-to-r from-purple-500/20 via-indigo-500/20 to-sky-500/20 text-purple-500 dark:text-purple-300'
+                        : 'border-purple-500/20 dark:border-purple-400/25 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-sky-500/10 hover:from-purple-500/20 hover:to-sky-500/20 text-purple-600 dark:text-purple-400 hover:text-sky-500'
+                    }`}
+                    title={tText('ريلز / فيديو / بث مباشر 🎬', 'Reels / Video / Live Stream 🎬')}
+                  >
+                    <Clapperboard className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -1736,6 +1862,15 @@ export default function Home() {
         document.body
       )}
 
+      {/* Guest Bookmark Storage Notice Toast */}
+      {guestSaveToast && createPortal(
+        <div className="fixed bottom-6 start-6 z-[9999] p-4 rounded-2xl bg-slate-900/95 dark:bg-[#182232]/95 border border-amber-500/40 text-amber-300 font-bold text-xs shadow-2xl flex items-center gap-2.5 backdrop-blur-md animate-[slideUp_0.2s_ease-out] max-w-md">
+          <Bookmark className="w-4 h-4 text-amber-400 shrink-0 fill-amber-400" />
+          <span>{guestSaveToast}</span>
+        </div>,
+        document.body
+      )}
+
       {/* Report Modal */}
       {showReportModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -1795,6 +1930,12 @@ export default function Home() {
           playSynthSound={playSynthSound}
         />
       )}
+
+      {/* Media Upload Modal (Reels / Long Video / Live Stream) */}
+      <UploadMediaModal
+        isOpen={showUploadMediaModal}
+        onClose={() => setShowUploadMediaModal(false)}
+      />
 
       {/* 🌌 Cosmic Portal Entry Flash & Fade Overlay */}
       {isEnteringSpace && createPortal(

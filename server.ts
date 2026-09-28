@@ -2006,6 +2006,98 @@ app.get("/api/admin/audit-logs", requireAuth, requireAdmin, async (req, res) => 
   });
 });
 
+// Transparent Reverse Proxy for Firebase Authentication (Option 3 / Mobile OAuth Redirect Handshake)
+app.all("/__/auth/*", async (req, res) => {
+  try {
+    const targetUrl = new URL(req.originalUrl || req.url, "https://lodavia.firebaseapp.com");
+    
+    // Forward headers excluding hop-by-hop headers to comply with HTTP/fetch (undici)
+    const hopByHopHeaders = new Set([
+      "host",
+      "connection",
+      "keep-alive",
+      "proxy-authenticate",
+      "proxy-authorization",
+      "te",
+      "trailer",
+      "transfer-encoding",
+      "upgrade"
+    ]);
+
+    const forwardHeaders: Record<string, string> = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      const lower = key.toLowerCase();
+      if (!hopByHopHeaders.has(lower) && value !== undefined) {
+        forwardHeaders[key] = Array.isArray(value) ? value.join(", ") : value;
+      }
+    }
+
+    const fetchOptions: RequestInit = {
+      method: req.method,
+      headers: forwardHeaders,
+      redirect: "manual",
+    };
+
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      if (req.body) {
+        if (typeof req.body === "string" || Buffer.isBuffer(req.body)) {
+          fetchOptions.body = req.body;
+        } else if (typeof req.body === "object") {
+          const contentType = req.headers["content-type"] || "";
+          if (contentType.includes("application/x-www-form-urlencoded")) {
+            fetchOptions.body = new URLSearchParams(req.body).toString();
+          } else {
+            fetchOptions.body = JSON.stringify(req.body);
+          }
+        }
+      }
+    }
+
+    const upstreamResponse = await fetch(targetUrl.toString(), fetchOptions);
+
+    res.status(upstreamResponse.status);
+
+    const clientHost = req.get("host") || "";
+
+    // Forward upstream response headers
+    upstreamResponse.headers.forEach((headerVal, headerKey) => {
+      const lowerKey = headerKey.toLowerCase();
+      // Exclude transfer-encoding, content-encoding, and content-length (decompressed by fetch)
+      if (
+        lowerKey === "transfer-encoding" ||
+        lowerKey === "content-encoding" ||
+        lowerKey === "content-length"
+      ) {
+        return;
+      }
+
+      // Problem 1: Rewrite Location header on redirects
+      if (lowerKey === "location") {
+        if (clientHost && headerVal.includes("lodavia.firebaseapp.com")) {
+          headerVal = headerVal.replace(/lodavia\.firebaseapp\.com/g, clientHost);
+        }
+        res.setHeader(headerKey, headerVal);
+        return;
+      }
+
+      // Problem 3: Strip explicit Domain=lodavia.firebaseapp.com from Set-Cookie so browser scopes to current host
+      if (lowerKey === "set-cookie") {
+        const cleanedCookie = headerVal.replace(/;\s*Domain=lodavia\.firebaseapp\.com/gi, "");
+        res.setHeader(headerKey, cleanedCookie);
+        return;
+      }
+
+      res.setHeader(headerKey, headerVal);
+    });
+
+    const responseBuffer = Buffer.from(await upstreamResponse.arrayBuffer());
+    return res.send(responseBuffer);
+  } catch (error: any) {
+    console.error("[Firebase Auth Reverse Proxy Error]:", error);
+    return res.status(502).send("Bad Gateway - Firebase Auth Proxy");
+  }
+});
+
 // Safe production error handling middleware (prevents leakage of traces or keys)
 app.use(safeErrorHandler);
 

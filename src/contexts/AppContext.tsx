@@ -21,11 +21,13 @@ import {
   todayEvents, 
   initialHomePosts 
 } from '../data';
+import { MediaItem, INITIAL_MEDIA_ITEMS } from '../data/mediaData';
 import { authService, firestoreService, storageService } from '../firebase/services';
 import { auth, isFirebaseConfigured } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { creditFirstActivity } from '../utils/referral';
 import { playSynthSound } from '../utils/synth';
+import { updateUserPresence } from '../utils/presence';
 import {
   translate,
   detectDeviceLanguage,
@@ -52,6 +54,8 @@ interface AppContextType {
   setEvents: React.Dispatch<React.SetStateAction<EventItem[]>>;
   homePosts: Post[];
   setHomePosts: React.Dispatch<React.SetStateAction<Post[]>>;
+  mediaList: MediaItem[];
+  setMediaList: React.Dispatch<React.SetStateAction<MediaItem[]>>;
   isDataLoading: boolean;
   
   lang: SupportedLanguage;
@@ -161,10 +165,67 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     });
     return () => unsubscribe();
   }, []);
+
+  // Real-time Presence Heartbeat (75s interval + visibilitychange + pagehide)
+  useEffect(() => {
+    const isGuest = !currentUser?.id || currentUser.isAnonymous === true || currentUser.id === 'guest' || currentUser.id === 'user_1';
+    if (isGuest) return;
+
+    const uid = currentUser.id;
+
+    // 1. Immediate heartbeat on mount/session start
+    updateUserPresence(uid, false);
+
+    // 2. Periodic heartbeat every 75s when document is visible
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        updateUserPresence(uid, false);
+      }
+    }, 75000);
+
+    // 3. Update when tab becomes visible again
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        updateUserPresence(uid, false);
+      }
+    };
+
+    // 4. Best effort update when leaving page
+    const handlePageHide = () => {
+      updateUserPresence(uid, false);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
+  }, [currentUser?.id, currentUser?.isAnonymous]);
   const [communities, setCommunities] = useState<CommunityItem[]>(allCommunities);
   const [chats, setChats] = useState<ChatConversation[]>(initialChats);
   const [events, setEvents] = useState<EventItem[]>(todayEvents);
   const [homePosts, setHomePosts] = useState<Post[]>(initialHomePosts);
+  const [mediaList, setMediaList] = useState<MediaItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('lodavia_media_items');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to load media items from localStorage', e);
+    }
+    return INITIAL_MEDIA_ITEMS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('lodavia_media_items', JSON.stringify(mediaList));
+    } catch (e) {
+      console.error('Failed to save media items to localStorage', e);
+    }
+  }, [mediaList]);
+
   const [isDataLoading, setIsDataLoading] = useState(false);
 
   const [lang, setLangState] = useState<SupportedLanguage>(() => {
@@ -789,6 +850,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       chats, setChats,
       events, setEvents,
       homePosts, setHomePosts,
+      mediaList, setMediaList,
       isDataLoading,
       lang, setLang,
       t,

@@ -6,13 +6,14 @@ import { notificationService } from '../services/notification.service';
 import { aiService } from '../services/ai.service';
 import { storageService } from '../services/storage.service';
 import { factService } from '../services/fact.service';
+import { savedItemsService } from '../services/savedItems.service';
 import { db, isFirebaseConfigured } from './config';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { storage as storageUtil } from '../utils/storage';
 import { handleFirestoreError, OperationType } from '../utils/firestore-error';
 import { AppUser } from '../types';
 
-export { authService, storageService, factService };
+export { authService, storageService, factService, savedItemsService };
 
 // Group the firestore-related actions under the original firestoreService namespace for backward-compatibility.
 export const firestoreService = {

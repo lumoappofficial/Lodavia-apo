@@ -322,7 +322,7 @@ function SocialAndGuestActions({
   setError: (err: string) => void;
   isAr: boolean;
 }) {
-  const { playSynthSound, setCurrentUser } = useApp();
+  const { playSynthSound, setCurrentUser, currentUser } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -331,9 +331,11 @@ function SocialAndGuestActions({
       try {
         const user = await authService.completeRedirectSignIn();
         if (user && isMounted) {
-          setCurrentUser(user);
-          if (playSynthSound) playSynthSound(880, 'sine', 0.2);
-          navigate('/home');
+          if (!currentUser || currentUser.id !== user.id) {
+            setCurrentUser(user);
+            if (playSynthSound) playSynthSound(880, 'sine', 0.2);
+            navigate('/home');
+          }
         }
       } catch (err: any) {
         if (isMounted) {
@@ -343,10 +345,22 @@ function SocialAndGuestActions({
       }
     };
     checkRedirect();
+
+    const unsubscribe = authService.subscribeToAuthProviderSignIn((user) => {
+      if (isMounted) {
+        if (!currentUser || currentUser.id !== user.id) {
+          setCurrentUser(user);
+          if (playSynthSound) playSynthSound(880, 'sine', 0.2);
+          navigate('/home');
+        }
+      }
+    });
+
     return () => {
       isMounted = false;
+      unsubscribe();
     };
-  }, [isAr, navigate, playSynthSound, setCurrentUser, setError]);
+  }, [currentUser, isAr, navigate, playSynthSound, setCurrentUser, setError]);
 
   const handleGoogleLogin = async () => {
     setError('');
@@ -414,14 +428,14 @@ function SocialAndGuestActions({
         <div className="flex-1 h-[1px] bg-white/[0.08]" />
       </div>
 
-      {/* Two Social Buttons Side-by-Side: Google & Apple ONLY */}
-      <div className="grid grid-cols-2 gap-2.5">
+      {/* Social Button: Google (Apple temporarily hidden) */}
+      <div className="w-full">
         <button
           id="btn-auth-google"
           type="button"
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="min-h-[44px] py-2.5 px-3 rounded-xl bg-[#070B14] hover:bg-[#131F37] border border-white/[0.08] hover:border-white/[0.16] text-slate-200 text-xs font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+          className="w-full min-h-[44px] py-2.5 px-3 rounded-xl bg-[#070B14] hover:bg-[#131F37] border border-white/[0.08] hover:border-white/[0.16] text-slate-200 text-xs font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -432,6 +446,7 @@ function SocialAndGuestActions({
           <span className="truncate">{isAr ? 'المتابعة عبر Google' : 'Continue with Google'}</span>
         </button>
 
+        {/* Temporarily hidden: Apple Sign In
         <button
           id="btn-auth-apple"
           type="button"
@@ -444,6 +459,7 @@ function SocialAndGuestActions({
           </svg>
           <span className="truncate">{isAr ? 'المتابعة عبر Apple' : 'Continue with Apple'}</span>
         </button>
+        */}
       </div>
 
       {/* Clear Distinct Guest Option */}

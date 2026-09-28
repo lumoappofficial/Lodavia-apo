@@ -173,7 +173,12 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row gap-4 h-[calc(100vh-140px)] min-h-[500px] animate-[fadeIn_0.4s_ease-out] select-none text-start" id="lodavia-messenger-root">
+    <div 
+      className={`flex-1 flex flex-col lg:flex-row gap-4 ${
+        activeChat ? 'h-[calc(100dvh-78px)] sm:h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)]' : 'h-[calc(100vh-140px)]'
+      } min-h-[500px] animate-[fadeIn_0.4s_ease-out] select-none text-start`} 
+      id="lodavia-messenger-root"
+    >
       
       {offlineStatus && (
         <div className="absolute top-16 left-4 right-4 z-30 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 p-3 rounded-xl flex items-center justify-between text-xs font-mono animate-pulse shadow-md">

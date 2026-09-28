@@ -41,6 +41,9 @@ import { CallStatus } from '../types/call';
 import { LodaviaChatPattern } from './LodaviaChatPattern';
 import { ChatSettingsModal } from './ChatSettingsModal';
 import UnifiedCallModal from './call/UnifiedCallModal';
+import { db, isFirebaseConfigured } from '../firebase/config';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { getOnlineStatus } from '../utils/presence';
 
 // Helper to format date headers
 function getDateHeader(timestamp: string, lang: string = 'ar') {
@@ -100,6 +103,79 @@ export function ChatWindow({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Real-time Presence Listener for the other user in this conversation
+  const [otherUserLastActive, setOtherUserLastActive] = useState<any>(null);
+  const [, setPresenceTick] = useState(0);
+
+  // Periodic ticker every 20s to smoothly re-calculate elapsed presence minutes
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPresenceTick(t => t + 1);
+    }, 20000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    setOtherUserLastActive(null);
+
+    // Identify target other user ID from conversation attributes
+    const targetUserId = conversation?.contactId || 
+                         (conversation as any)?.otherUserId || 
+                         (conversation as any)?.participantId || 
+                         (conversation as any)?.recipientId ||
+                         (!conversation?.id?.startsWith('chat_') ? conversation?.id : undefined);
+
+    if (!targetUserId || !isFirebaseConfigured || !db) {
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, 'users', targetUserId);
+      const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setOtherUserLastActive(data?.lastActive ?? null);
+        } else {
+          setOtherUserLastActive(null);
+        }
+      }, () => {
+        // Silently fall back to default conversation mock status if user document not accessible
+        setOtherUserLastActive(null);
+      });
+
+      return () => {
+        unsubscribe();
+      };
+    } catch {
+      return () => {};
+    }
+  }, [conversation?.id, conversation?.contactId]);
+
+  // Track previous isTyping state to trigger notification sound only on false -> true transition
+  const prevIsTypingRef = useRef<boolean>(!!isTyping);
+  const prevConvIdRef = useRef<string | undefined>(conversation?.id);
+
+  useEffect(() => {
+    // If conversation switched, sync ref without playing typing sound
+    if (conversation?.id !== prevConvIdRef.current) {
+      prevConvIdRef.current = conversation?.id;
+      prevIsTypingRef.current = !!isTyping;
+      return;
+    }
+
+    // Trigger gentle notification sound only when isTyping turns from false to true
+    if (!prevIsTypingRef.current && isTyping) {
+      try {
+        if (typeof playSynthSound === 'function') {
+          playSynthSound(480, 'sine', 0.09);
+        }
+      } catch {
+        // Silently ignore audio context autoplay restrictions if any
+      }
+    }
+    prevIsTypingRef.current = !!isTyping;
+  }, [isTyping, conversation?.id, playSynthSound]);
+
   // Auto-scroll on loaded conversations
   useEffect(() => {
     scrollToBottom('smooth');
@@ -133,6 +209,15 @@ export function ChatWindow({
   }
 
   const rawMessages = conversation.messages || [];
+
+  // Real-time presence status computed for other user
+  const calculatedPresence = otherUserLastActive ? getOnlineStatus(otherUserLastActive, lang) : null;
+  const isOnlineEffective = calculatedPresence !== null ? calculatedPresence.isOnline : conversation.isOnline;
+  const statusTextEffective = calculatedPresence !== null
+    ? calculatedPresence.lastSeenText
+    : (conversation.isOnline
+        ? (lang === 'ar' ? 'متصل بالشبكة' : 'Secure Uplink Online')
+        : (conversation.lastSeen || (lang === 'ar' ? 'غير متصل' : 'Offline')));
 
   // Filter messages if search active
   const messages = searchQuery.trim()
@@ -402,13 +487,13 @@ export function ChatWindow({
                 (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.contactName)}&background=0284c7&color=fff`;
               }}
             />
-            {conversation.isOnline ? (
-              <span className="absolute bottom-0 right-0 rtl:right-auto rtl:left-0 flex h-3.5 w-3.5">
+            {isOnlineEffective ? (
+              <span className="absolute bottom-0 right-0 rtl:right-auto rtl:left-0 flex h-3.5 w-3.5" title={statusTextEffective}>
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white dark:border-[#111827] shadow-[0_0_8px_rgba(16,185,129,0.85)]" />
               </span>
             ) : (
-              <span className="absolute bottom-0 right-0 rtl:right-auto rtl:left-0 w-3 h-3 rounded-full bg-slate-400 dark:bg-white/20 border-2 border-white dark:border-[#111827]" />
+              <span className="absolute bottom-0 right-0 rtl:right-auto rtl:left-0 w-3 h-3 rounded-full bg-slate-400 dark:bg-white/20 border-2 border-white dark:border-[#111827]" title={statusTextEffective} />
             )}
           </div>
           <div className="min-w-0 flex-1 overflow-hidden">
@@ -429,10 +514,12 @@ export function ChatWindow({
                 <span className="text-rose-600 dark:text-rose-400 font-semibold truncate">{lang === 'ar' ? 'تم حظر المستخدم' : 'Blocked contact'}</span>
               ) : isTyping ? (
                 <span className="text-sky-600 dark:text-cyan-400 font-bold animate-pulse truncate">{lang === 'ar' ? 'يكتب الآن...' : 'Typing...'}</span>
-              ) : conversation.isOnline ? (
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold truncate">{lang === 'ar' ? 'متصل بالشبكة' : 'Secure Uplink Online'}</span>
+              ) : isOnlineEffective ? (
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+                  {calculatedPresence ? calculatedPresence.lastSeenText : (lang === 'ar' ? 'متصل بالشبكة' : 'Secure Uplink Online')}
+                </span>
               ) : (
-                <span className="text-[#64748B] dark:text-slate-500 truncate">{lang === 'ar' ? 'غير متصل' : 'Offline'}</span>
+                <span className="text-[#64748B] dark:text-slate-500 truncate">{statusTextEffective}</span>
               )}
             </span>
           </div>
@@ -679,20 +766,36 @@ export function ChatWindow({
                     }`}
                   >
                     
-                    {/* Inline Image attachment */}
+                    {/* Inline Image or Sticker attachment */}
                     {msg.type === 'image' && msg.mediaUrl && (
-                      <div 
-                        onClick={() => {
-                          setSelectedMediaUrl(msg.mediaUrl || null);
-                          setSelectedMediaType('image');
-                        }}
-                        className="rounded-xl overflow-hidden border border-[#E2E8F0] dark:border-white/10 aspect-video w-56 relative cursor-zoom-in group/img"
-                      >
-                        <img src={msg.mediaUrl} alt="Attachment" className="w-full h-full object-cover transition-all group-hover/img:scale-105" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-all">
-                          <span className="text-[10px] font-mono text-white bg-black/80 px-2 py-1 rounded-full">{lang === 'ar' ? 'عرض ملء الشاشة' : 'Click to zoom'}</span>
+                      msg.isSticker ? (
+                        <div 
+                          onClick={() => {
+                            setSelectedMediaUrl(msg.mediaUrl || null);
+                            setSelectedMediaType('image');
+                          }}
+                          className="w-24 h-24 relative cursor-zoom-in group/img bg-transparent flex items-center justify-center p-1"
+                        >
+                          <img 
+                            src={msg.mediaUrl} 
+                            alt="Sticker" 
+                            className="w-full h-full object-contain transition-transform group-hover/img:scale-110" 
+                          />
                         </div>
-                      </div>
+                      ) : (
+                        <div 
+                          onClick={() => {
+                            setSelectedMediaUrl(msg.mediaUrl || null);
+                            setSelectedMediaType('image');
+                          }}
+                          className="rounded-xl overflow-hidden border border-[#E2E8F0] dark:border-white/10 aspect-video w-56 relative cursor-zoom-in group/img"
+                        >
+                          <img src={msg.mediaUrl} alt="Attachment" className="w-full h-full object-cover transition-all group-hover/img:scale-105" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-all">
+                            <span className="text-[10px] font-mono text-white bg-black/80 px-2 py-1 rounded-full">{lang === 'ar' ? 'عرض ملء الشاشة' : 'Click to zoom'}</span>
+                          </div>
+                        </div>
+                      )
                     )}
 
                     {/* Inline Video player */}
